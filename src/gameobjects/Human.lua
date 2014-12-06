@@ -24,7 +24,7 @@ local Human = Class
 
   init = function(self, x, y, peepType)
     GameObject.init(self, x, y, 5)
-    log:write("created human", x, y )
+    self.t = math.random()
   end,
 }
 Human:include(GameObject)
@@ -64,12 +64,21 @@ Game loop
 --]]--
 
 function Human:update(dt)
+  self.t = self.t + dt*0.3
+  if self.t > 1 then
+    self.t = self.t - 1
+  end
 
 end
 
 function Human:draw(x, y)
-  log:write("draw")
-  love.graphics.rectangle("fill", self.x - 8, self.y - 32, 16, 32)
+  love.graphics.rectangle("fill", self.x - 8, self.y - 32 - 128*(1 + math.cos(self.t*math.pi*2)), 16, 32)
+
+
+
+  light(x, y, 128*(1 + math.cos(self.t*math.pi*2)), 1)
+
+
 end
 
 --[[------------------------------------------------------------

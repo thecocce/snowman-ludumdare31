@@ -53,7 +53,7 @@ local __old_love_mouse_getPosition = love.mouse.getPosition
 
 love.mouse.getPosition = function()
 	local x, y = __old_love_mouse_getPosition()
-	return x/VIEW_SCALE, y/VIEW_SCALE
+	return x/VIEW_SCALE - VIEW_OFFX, y/VIEW_SCALE - VIEW_OFFY
 end
 
 function GameObject:isAt(x, y)
@@ -71,6 +71,8 @@ end
 -- GAME INCLUDES
 -------------------------------------------------------------------------------
 
+darkness = require("darkness")
+
 Human = require("gameobjects/Human")
 
 -------------------------------------------------------------------------------
@@ -80,8 +82,7 @@ Human = require("gameobjects/Human")
 WORLD_W = 720
 WORLD_H = 720
 WORLD_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
-SHADOW_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
-UI_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
+
 
 LAND_W = WORLD_W*0.2
 
