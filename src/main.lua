@@ -74,6 +74,10 @@ end
 darkness = require("darkness")
 
 Human = require("gameobjects/Human")
+Monster = require("gameobjects/Monster")
+Torch = require("gameobjects/Torch")
+Fire = require("gameobjects/Fire")
+Bonfire = require("gameobjects/Bonfire")
 
 -------------------------------------------------------------------------------
 -- DEFINES

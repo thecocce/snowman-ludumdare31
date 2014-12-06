@@ -13,34 +13,40 @@ Lesser General Public License for more details.
 --]]
 
 --[[------------------------------------------------------------
+CONSTANTS
+--]]--
+
+local SPEED = 128
+
+--[[------------------------------------------------------------
 Initialisation
 --]]--
 
-local Human = Class
+local Monster = Class
 {
   FRICTION = 100,
 
-  type = GameObject.newType("Human"),
+  type = GameObject.newType("Monster"),
 
   init = function(self, x, y)
     GameObject.init(self, x, y, 5)
     self.t = math.random()
   end,
 }
-Human:include(GameObject)
+Monster:include(GameObject)
 
 --[[------------------------------------------------------------
 Destruction
 --]]--
 
-function Human:onPurge()
+function Monster:onPurge()
 end
 
 --[[------------------------------------------------------------
 States
 --]]--
 
-function Human:setState(newStateClass, ...)
+function Monster:setState(newStateClass, ...)
   
   if self.state.class == newStateClass then
     return
@@ -63,39 +69,26 @@ end
 Game loop
 --]]--
 
-function Human:update(dt)
-  self.t = self.t + dt*0.3
-  if self.t > 1 then
-    self.t = self.t - 1
-  end
+function Monster:update(dt)
+  local dx, dy = Vector.normalize(WORLD_W*0.5 - self.x, WORLD_H*0.5 - self.y)
+
+  self.dx, self.dy = dx*SPEED, dy*SPEED
 
   GameObject.update(self, dt)
 end
 
-function Human:draw(x, y)
-  light(x, y, 64, 2)
-end
-
-function Human:draw_afterdark(x, y)
-  love.graphics.setColor(255, 190, 187)
+function Monster:draw(x, y)
+  love.graphics.setColor(122, 152, 178)
     love.graphics.rectangle("fill", self.x - 8, self.y - 32, 16, 32)
   useful.bindWhite()
-end
-
---[[------------------------------------------------------------
-Combat
---]]--
-
-function Human:throw(x, y)
-  local thrown = Torch(self.x, self.y, x, y)
 end
 
 --[[------------------------------------------------------------
 Collisions
 --]]--
 
-function Human:eventCollision(other, dt)
-  if other:isType("Human") then
+function Monster:eventCollision(other, dt)
+  if other:isType("Monster") then
     other:shoveAwayFrom(self, 100*dt)
   end
 end
@@ -105,4 +98,4 @@ end
 Export
 --]]--
 
-return Human
+return Monster

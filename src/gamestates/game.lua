@@ -18,12 +18,15 @@ local state = gamestate.new()
 Defines
 --]]--
 
+local MAX_PICK_DIST2 = 16*16
+local MAX_THROW_DIST2 = 1024*1024--256*256
 
 --[[------------------------------------------------------------
 Internal state
 --]]--
 
 local picked_human = nil
+local t = 0
 
 
 --[[------------------------------------------------------------
@@ -31,7 +34,7 @@ Gamestate navigation
 --]]--
 
 function state:init()
-
+	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
 end
 
 
@@ -44,12 +47,15 @@ function state:enter()
 	useful.popCanvas()
 
 	-- reset state
+	Monster(WORLD_W*0.6, WORLD_H*0.6)
 	picked_human = nil
+	t = 0
 end
 
 
 function state:leave()
 	GameObject.purgeAll()
+	DARKNESS_CANVAS:clear()
 end
 
 --[[------------------------------------------------------------
@@ -66,10 +72,12 @@ function state:mousepressed(x, y)
 
 	local pick, pick_dist2 = GameObject.getNearestOfType("Human", x, y)
 
-	if pick_dist2 > 16*16 then
-		Human(x, y)
-	else
+	if pick_dist2 < MAX_PICK_DIST2 then
 		picked_human = pick
+	elseif pick_dist2 < MAX_THROW_DIST2 then
+		pick:throw(x, y)
+	elseif not pick then
+		Human(x, y)
 	end
 end
 
@@ -86,7 +94,17 @@ function state:update(dt)
 		picked_human.x, picked_human.y = mx, my
 	end
 
-	GameObject.updateAll(dt)
+	-- spawn monsters
+	t = t + dt
+	if t > 10 then
+		local angle = math.random()*math.pi*2
+
+		Monster((math.cos(angle) + 0.5)*WORLD_W, (math.sin(angle) + 0.5)*WORLD_H)
+		t = 0
+	end
+
+	-- update all object
+	GameObject.updateAll(dt, { oblique = VIEW_OBLIQUE })
 end
 
 function state:draw()
@@ -99,7 +117,7 @@ function state:draw()
 	useful.popCanvas()
 
 
-	love.graphics.setColor(255, 0, 0)
+	love.graphics.setColor(200, 200, 255)
 	love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 	useful.bindWhite()
 
@@ -108,9 +126,9 @@ function state:draw()
 
 	love.graphics.draw(DARKNESS_CANVAS)
 
+	GameObject.mapToAll(function(o) if o.draw_afterdark then o:draw_afterdark(o.x, o.y) end end)
+
 	love.graphics.print("in game", 0, 0)
-
-
 
 end
 

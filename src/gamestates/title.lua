@@ -55,7 +55,7 @@ function state:draw()
 	local offset = 8*math.sin(2*t)
 	
 	love.graphics.setFont(FONT_BIG)
-	love.graphics.printf("SNOWMEN", 
+	love.graphics.printf("Twilight of Humanity", 
 		WORLD_W*(0.5 - 0.2), WORLD_H*0.1 + offset, WORLD_W*0.4, "center") 
 
 	love.graphics.setFont(FONT_MEDIUM)
