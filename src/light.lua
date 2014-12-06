@@ -1,7 +1,6 @@
-DARKNESS_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
+COLOUR_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
+ALPHA_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 LIGHT_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
-
-COMPOSITE_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 
 function light(x, y, z, intensity, r, g, b)
 
@@ -20,15 +19,17 @@ function light(x, y, z, intensity, r, g, b)
     end
 
     -- erase darkness
-    -- useful.pushCanvas(DARKNESS_CANVAS)
-    --   useful.bindWhite(i/intensity*32)
-    --   useful.oval("fill", x, y, size, size*VIEW_OBLIQUE)
-    -- useful.popCanvas()
-
-    -- draw light
-    useful.pushCanvas(LIGHT_CANVAS)
-      love.graphics.setColor(255, 55, 10, i/intensity*32)
+    useful.pushCanvas(ALPHA_CANVAS)
+      useful.bindWhite(i/intensity*255)
       useful.oval("fill", x, y, size, size*VIEW_OBLIQUE)
+    useful.popCanvas()
+
+    -- colour light
+    useful.pushCanvas(COLOUR_CANVAS)
+      love.graphics.setColor(255, 55, 10, i/intensity*32)
+      love.graphics.setBlendMode("additive")
+        useful.oval("fill", x, y, size, size*VIEW_OBLIQUE)
+      love.graphics.setBlendMode("alpha")
     useful.popCanvas()
 
   end

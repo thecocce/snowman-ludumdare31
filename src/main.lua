@@ -83,8 +83,8 @@ Bonfire = require("gameobjects/Bonfire")
 -- DEFINES
 -------------------------------------------------------------------------------
 
-WORLD_W = 720
-WORLD_H = 720
+WORLD_W = 512
+WORLD_H = 512
 WORLD_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 
 

@@ -35,7 +35,6 @@ Gamestate navigation
 --]]--
 
 function state:init()
-	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
 end
 
 
@@ -47,11 +46,13 @@ function state:enter()
 		useful.bindWhite()
 	useful.popCanvas()
 
-	-- reset state
-	Monster(WORLD_W*0.2, WORLD_H*0.6)
+	-- reset
 	picked_human = nil
 	t = 0
 	day_night = 0
+
+	-- repopulate world
+	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
 	for i = 1, 10 do
 		local angle = math.random()*math.pi*2
 		local distance = 64*(1 + math.random())
@@ -62,7 +63,6 @@ end
 
 function state:leave()
 	GameObject.purgeAll()
-	DARKNESS_CANVAS:clear()
 end
 
 --[[------------------------------------------------------------
@@ -116,16 +116,19 @@ end
 function state:draw()
 
 	WORLD_CANVAS:clear()
+
+	local lightness = math.max(0, 4*(1 - day_night)*day_night)
 	local r, g, b = useful.ktemp(useful.lerp(16000, 2000, day_night))
-	local light = 0.8*math.max(0, 4*(1 - day_night)*day_night)
-	useful.pushCanvas(DARKNESS_CANVAS)
-		love.graphics.setColor(r*light, g*light, b*light, 32)
+	useful.pushCanvas(COLOUR_CANVAS)
+		love.graphics.setColor(r*lightness, g*lightness, b*lightness, 32)
 			love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 		useful.bindWhite()
 	useful.popCanvas()
 
-	useful.pushCanvas(LIGHT_CANVAS)
-		useful.bindBlack()
+	useful.pushCanvas(ALPHA_CANVAS)
+		useful.bindWhite(lightness*255)
+			love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
+		useful.bindBlack((1 - lightness)*255)
 			love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 		useful.bindWhite()
 	useful.popCanvas()
@@ -137,12 +140,18 @@ function state:draw()
 
 	GameObject.drawAll()
 
-	love.graphics.draw(DARKNESS_CANVAS)
-	love.graphics.setBlendMode("screen")
+	useful.pushCanvas(LIGHT_CANVAS)
+		love.graphics.draw(COLOUR_CANVAS)
+		love.graphics.setBlendMode("multiplicative")
+			love.graphics.draw(ALPHA_CANVAS)
+		love.graphics.setBlendMode("alpha")
+	useful.popCanvas(LIGHT_CANVAS)
+
+	love.graphics.setBlendMode("multiplicative")
 		love.graphics.draw(LIGHT_CANVAS)
 	love.graphics.setBlendMode("alpha")
 
-	love.graphics.print(tostring(math.floor(day_night*10)/10), 0, 0)
+	--love.graphics.print(tostring(math.floor(day_night*10)/10), 0, 0)
 
 
 end

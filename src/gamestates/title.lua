@@ -56,11 +56,11 @@ function state:draw()
 	
 	love.graphics.setFont(FONT_BIG)
 	love.graphics.printf("Twilight of Humanity", 
-		WORLD_W*(0.5 - 0.2), WORLD_H*0.1 + offset, WORLD_W*0.4, "center") 
+		WORLD_W*(0.5 - 0.3), WORLD_H*0.1 + offset, WORLD_W*0.6, "center") 
 
 	love.graphics.setFont(FONT_MEDIUM)
 	love.graphics.printf("@wilbefast\n#LDJam #LudumDare31", 
-		WORLD_W*(0.5 - 0.3), WORLD_H*0.4 + offset, WORLD_W*0.6, "center") 
+		WORLD_W*(0.5 - 0.3), WORLD_H*0.5 + offset, WORLD_W*0.6, "center") 
 
 	love.graphics.setFont(FONT_SMALL)
 end
