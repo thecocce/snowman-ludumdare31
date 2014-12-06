@@ -66,10 +66,10 @@ end
 
 function Torch:draw(x, y)
   light(x, y, self.z, 2)
-end
-
-function Torch:draw_afterdark(x, y)
-  love.graphics.rectangle("fill", self.x - 4, self.y - 4 - self.z, 8, 8)
+  light(x, y - self.z, 0, 1)
+  useful.bindBlack()
+    love.graphics.rectangle("fill", self.x - 4, self.y - 4 - self.z, 8, 8)
+  useful.bindWhite()
 end
 
 --[[------------------------------------------------------------

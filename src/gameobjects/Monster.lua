@@ -70,9 +70,9 @@ Game loop
 --]]--
 
 function Monster:update(dt)
-  local dx, dy = Vector.normalize(WORLD_W*0.5 - self.x, WORLD_H*0.5 - self.y)
+  --local dx, dy = Vector.normalize(WORLD_W*0.5 - self.x, WORLD_H*0.5 - self.y)
 
-  self.dx, self.dy = dx*SPEED, dy*SPEED
+  --self.dx, self.dy = dx*SPEED, dy*SPEED
 
   GameObject.update(self, dt)
 end

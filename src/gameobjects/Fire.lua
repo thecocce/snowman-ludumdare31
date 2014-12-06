@@ -51,9 +51,6 @@ end
 
 function Fire:draw(x, y)
   light(x, y, 0, self.fuel)
-end
-
-function Fire:draw_afterdark(x, y)
   love.graphics.rectangle("fill", self.x - 4, self.y - 4, 8, 8)
 end
 

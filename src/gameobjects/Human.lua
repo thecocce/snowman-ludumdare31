@@ -25,6 +25,7 @@ local Human = Class
   init = function(self, x, y)
     GameObject.init(self, x, y, 5)
     self.t = math.random()
+    self.torchFuel = 1
   end,
 }
 Human:include(GameObject)
@@ -73,11 +74,11 @@ function Human:update(dt)
 end
 
 function Human:draw(x, y)
-  light(x, y, 64, 2)
-end
+  if self.torchFuel > 0 then
+    light(x, y, 64, 2)
+  end
 
-function Human:draw_afterdark(x, y)
-  love.graphics.setColor(255, 190, 187)
+  love.graphics.setColor(122, 178, 128)
     love.graphics.rectangle("fill", self.x - 8, self.y - 32, 16, 32)
   useful.bindWhite()
 end
@@ -88,6 +89,11 @@ Combat
 
 function Human:throw(x, y)
   local thrown = Torch(self.x, self.y, x, y)
+  self.torchFuel = 0
+end
+
+function Human:canThrow(x, y)
+  return (self.torchFuel > 0)
 end
 
 --[[------------------------------------------------------------

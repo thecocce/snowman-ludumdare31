@@ -71,7 +71,7 @@ end
 -- GAME INCLUDES
 -------------------------------------------------------------------------------
 
-darkness = require("darkness")
+require("light")
 
 Human = require("gameobjects/Human")
 Monster = require("gameobjects/Monster")
@@ -199,6 +199,7 @@ love.draw = function()
 		 	VIEW_OFFX + useful.signedRand(shake), 
 	 		VIEW_OFFY + useful.signedRand(shake))
 		love.graphics.draw(WORLD_CANVAS)
+
 		useful.recordGIF("x")
 	love.graphics.pop()
 

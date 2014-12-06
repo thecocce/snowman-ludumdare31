@@ -44,9 +44,6 @@ end
 
 function Bonfire:draw(x, y)
   light(x, y, 0, 8)
-end
-
-function Bonfire:draw_afterdark(x, y)
   love.graphics.rectangle("fill", self.x - 8, self.y - 8, 16, 16)
 end
 

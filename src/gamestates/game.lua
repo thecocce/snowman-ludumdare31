@@ -28,6 +28,7 @@ Internal state
 local picked_human = nil
 local t = 0
 
+local day_night = 0
 
 --[[------------------------------------------------------------
 Gamestate navigation
@@ -47,9 +48,15 @@ function state:enter()
 	useful.popCanvas()
 
 	-- reset state
-	Monster(WORLD_W*0.6, WORLD_H*0.6)
+	Monster(WORLD_W*0.2, WORLD_H*0.6)
 	picked_human = nil
 	t = 0
+	day_night = 0
+	for i = 1, 10 do
+		local angle = math.random()*math.pi*2
+		local distance = 64*(1 + math.random())
+		Human(math.cos(angle)*distance + WORLD_W*0.5, math.sin(angle)*distance + WORLD_H*0.5)
+	end
 end
 
 
@@ -71,13 +78,15 @@ end
 function state:mousepressed(x, y)
 
 	local pick, pick_dist2 = GameObject.getNearestOfType("Human", x, y)
-
 	if pick_dist2 < MAX_PICK_DIST2 then
 		picked_human = pick
-	elseif pick_dist2 < MAX_THROW_DIST2 then
-		pick:throw(x, y)
-	elseif not pick then
-		Human(x, y)
+	else
+		local thrower = GameObject.getNearestOfType("Human", x, y, 
+			function(human) return human:canThrow(x, y) 
+		end)
+		if thrower then
+			thrower:throw(x, y)
+		end
 	end
 end
 
@@ -94,13 +103,10 @@ function state:update(dt)
 		picked_human.x, picked_human.y = mx, my
 	end
 
-	-- spawn monsters
-	t = t + dt
-	if t > 10 then
-		local angle = math.random()*math.pi*2
-
-		Monster((math.cos(angle) + 0.5)*WORLD_W, (math.sin(angle) + 0.5)*WORLD_H)
-		t = 0
+	-- calculate time of day
+	day_night = day_night + dt/4
+	if day_night > 1 then
+		day_night = day_night - 2
 	end
 
 	-- update all object
@@ -108,27 +114,36 @@ function state:update(dt)
 end
 
 function state:draw()
-	WORLD_CANVAS:clear()
 
+	WORLD_CANVAS:clear()
+	local r, g, b = useful.ktemp(useful.lerp(16000, 2000, day_night))
+	local light = 0.8*math.max(0, 4*(1 - day_night)*day_night)
 	useful.pushCanvas(DARKNESS_CANVAS)
-		useful.bindBlack(32)
+		love.graphics.setColor(r*light, g*light, b*light, 32)
+			love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
+		useful.bindWhite()
+	useful.popCanvas()
+
+	useful.pushCanvas(LIGHT_CANVAS)
+		useful.bindBlack()
 			love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 		useful.bindWhite()
 	useful.popCanvas()
 
 
 	love.graphics.setColor(200, 200, 255)
-	love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
+		love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 	useful.bindWhite()
 
 	GameObject.drawAll()
-	
 
 	love.graphics.draw(DARKNESS_CANVAS)
+	love.graphics.setBlendMode("screen")
+		love.graphics.draw(LIGHT_CANVAS)
+	love.graphics.setBlendMode("alpha")
 
-	GameObject.mapToAll(function(o) if o.draw_afterdark then o:draw_afterdark(o.x, o.y) end end)
+	love.graphics.print(tostring(math.floor(day_night*10)/10), 0, 0)
 
-	love.graphics.print("in game", 0, 0)
 
 end
 
