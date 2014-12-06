@@ -56,16 +56,28 @@ love.mouse.getPosition = function()
 	return x/VIEW_SCALE, y/VIEW_SCALE
 end
 
+function GameObject:isAt(x, y)
+  return (Vector.dist2(self.x, self.y, x, y) < self.r*self.r)
+end
+
+
+function GameObject:isNear(obj)
+  local r = self.r + (obj.r or 0)
+  return (Vector.dist2(self.x, self.y, obj.x, obj.y) < 2*r*r)
+end
+
+
 -------------------------------------------------------------------------------
 -- GAME INCLUDES
 -------------------------------------------------------------------------------
 
+Human = require("gameobjects/Human")
 
 -------------------------------------------------------------------------------
 -- DEFINES
 -------------------------------------------------------------------------------
 
-WORLD_W = 1280
+WORLD_W = 720
 WORLD_H = 720
 WORLD_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 SHADOW_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
@@ -84,6 +96,9 @@ GRID_Y = (WORLD_H - GRID_H)/2
 
 VIEW_W = 0
 VIEW_H = 0
+
+VIEW_OFFX = 0
+VIEW_OFFY = 0
 
 VIEW_OBLIQUE = 0.75
 
@@ -124,6 +139,10 @@ love.load = function()
 		VIEW_SCALE = VIEW_SCALE + 0.0001
 	end
 	VIEW_SCALE = VIEW_SCALE - 0.0001
+
+	VIEW_OFFX = VIEW_W*0.5/VIEW_SCALE - WORLD_W*0.5
+	VIEW_OFFY = VIEW_H*0.5/VIEW_SCALE - WORLD_H*0.5
+
 	love.graphics.setDefaultFilter("nearest", "nearest", 1)
 
   --fudge.set({ monkey = true })
@@ -171,7 +190,9 @@ love.draw = function()
 
 	love.graphics.push()
 		love.graphics.scale(VIEW_SCALE, VIEW_SCALE)
-		love.graphics.translate(useful.signedRand(shake), useful.signedRand(shake))
+		love.graphics.translate(
+		 	VIEW_OFFX + useful.signedRand(shake), 
+	 		VIEW_OFFY + useful.signedRand(shake))
 		love.graphics.draw(WORLD_CANVAS)
 		useful.recordGIF("x")
 	love.graphics.pop()
@@ -194,7 +215,7 @@ love.update = function(dt)
 end
 
 love.mousepressed = function(x, y, button)
-	gamestate.mousepressed(x/VIEW_SCALE, y/VIEW_SCALE, button)
+	gamestate.mousepressed(x/VIEW_SCALE - VIEW_OFFX, y/VIEW_SCALE - VIEW_OFFY, button)
 end
 
 love.mousereleased = function(x, y, button)

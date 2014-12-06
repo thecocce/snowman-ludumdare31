@@ -49,8 +49,7 @@ function state:keypressed(key, uni)
 end
 
 function state:mousepressed(x, y)
-
-	
+	Human(x, y)
 end
 
 function state:mousereleased()
@@ -58,12 +57,17 @@ function state:mousereleased()
 end
 
 function state:update(dt)
-	
+	GameObject.updateAll(dt)
 end
 
 function state:draw()
 	WORLD_CANVAS:clear()
-	
+
+	love.graphics.setColor(255, 0, 0)
+	love.graphics.rectangle("fill", 0, 0, 3000, 3000)
+	useful.bindWhite()
+
+	GameObject.drawAll()
 	love.graphics.print("in game", 0, 0)
 
 end
