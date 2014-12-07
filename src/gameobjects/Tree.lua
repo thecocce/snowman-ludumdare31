@@ -21,11 +21,28 @@ local Tree = Class
   type = GameObject.newType("Tree"),
 
   init = function(self, x, y)
-    GameObject.init(self, x, y, 4)
-    self.fuel = 1
-    self.heat = 0
-    self.particle_t = math.random()
-    self.h = 64
+    GameObject.init(self, x, y, 8)
+
+    self.h = 50
+
+    for i = 1, 2 do 
+      local angle = math.random()*math.pi*2
+      local dist = 8 + math.random()*4
+      TorchFallen(
+        x + math.cos(angle)*dist, 
+        y + math.sin(angle)*dist, 1, 0)
+    end
+
+    self.branches = {}
+    local n_branches = 3 + math.random(3)
+    for i = 1, n_branches do
+      local progress = i/n_branches
+      table.insert(self.branches, {
+        z = (0.2 + 0.6*progress) * self.h ,
+        side = 2*(i%2) - 1,
+        length = 3 + (8 + math.random()*4)*(1 - progress)
+      })
+    end
   end,
 }
 Tree:include(GameObject)
@@ -37,67 +54,50 @@ Destruction
 function Tree:onPurge()
 end
 
+--[[------------------------------------------------------------
+Fire
+--]]--
+
+function Tree:ignite()
+  self.bonfire = Bonfire(self.x, self.y - 1)
+  self.bonfire.tree = self
+end
+
+
+function Tree:isOnFire()
+  return (self.bonfire ~= nil)
+end
 
 --[[------------------------------------------------------------
 Game loop
 --]]--
 
 function Tree:update(dt)
-
-  -- burn
-  if self.heat > 0 then
-    -- exponential decline of heat
-    self.heat = math.max(0, self.heat - 0.1*self.heat*dt)
-
-    -- linear decline of fuel
-    if self.heat > 0.2 then
-      self.fuel = self.fuel - 0.0001*self.heat*dt
-    else
-      self.heat = 0
-    end
-
-    -- die
-    if self.fuel <= 0.1 then
-      self.purge = true
-    end
-
-    -- particles
-    self.particle_t = self.particle_t + dt*30
-    if self.particle_t > 1 then
-
-      if math.random()*1.5 > self.heat then
-        local angle = math.random()*math.pi*2
-        local speed = (18 + math.random()*8)*(0.5 + 0.5*self.heat)
-        local dx, dy = math.cos(angle), math.sin(angle)
-        Particle.Smoke(self.x + dx*4*self.heat, self.y + dy*4*self.heat, 
-          dx*speed, 
-          dy*speed, 
-          (60 + math.random()*20)*(0.5 + 0.5*self.heat))
-      else
-        local angle = math.random()*math.pi*2
-        local speed = 18 + math.random()*8
-        local dx, dy = math.cos(angle)*self.heat, math.sin(angle)*self.heat
-        Particle.Fire(self.x + dx*4, self.y + dy*4, 
-          dx*speed, 
-          dy*speed, 
-          (60 + math.random()*20)*self.heat)
-      end
-
-      self.particle_t = self.particle_t - 1
-    end
+  if self.bonfire and self.bonfire.purge then
+    self.bonfire = nil
   end
 end
 
 function Tree:draw(x, y)
-  light(x, y, 0, 10*self.heat)
-
-
-  useful.bindBlack()
-
-    love.graphics.rectangle(self.x - self.r*0.5, self.y - self.h, self.r, self.h)
-
+  -- tree body
+  love.graphics.setColor(24, 32, 48)
+    love.graphics.rectangle("fill", self.x - 2, self.y - self.h, 4, self.h)
+    for _, b in ipairs(self.branches) do
+      love.graphics.rectangle("fill", self.x, self.y - b.z, b.length*b.side, 2)
+    end
   useful.bindWhite()
 
+  -- shadow
+  useful.pushCanvas(SHADOW_CANVAS)
+    useful.oval("fill", self.x, self.y, 15, 15*VIEW_OBLIQUE)
+  useful.popCanvas()
+
+  -- debug overlay
+  if DEBUG then
+    useful.pushCanvas(UI_CANVAS)
+      love.graphics.circle("line", self.x, self.y, self.r)
+    useful.popCanvas()
+  end
 end
 
 

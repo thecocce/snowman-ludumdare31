@@ -21,7 +21,7 @@ local TorchFallen = Class
   type = GameObject.newType("TorchFallen"),
 
   init = function(self, x, y, starting_fuel, starting_heat)
-    GameObject.init(self, x, y, 4)
+    GameObject.init(self, x, y, 8)
     self.fuel = starting_fuel
     self.heat = starting_heat
     self.t = math.random()
@@ -89,9 +89,6 @@ function TorchFallen:update(dt)
 end
 
 function TorchFallen:draw(x, y)
-  light(x, y, 0, self.heat)
-
-
   useful.bindBlack()
     local len = 12*self.fuel
     local s = self.spin
@@ -105,12 +102,24 @@ function TorchFallen:draw(x, y)
   love.graphics.setColor(255, 100, 55, 255*self.heat)
     love.graphics.rectangle("fill", self.x - 1, self.y - 1, 2, 2)
   useful.bindWhite()
+
+  -- shadow or light
+  if self.heat > 0 then
+    light(x, y, 0, self.heat)
+  else
+    useful.pushCanvas(SHADOW_CANVAS)
+
+      local shad_x = (self.spin*2 - 1)
+
+      useful.oval("fill", self.x + shad_x*8, self.y, 8, 4*VIEW_OBLIQUE)
+    useful.popCanvas()
+  end
 end
 
 function TorchFallen:antiShadow()
   useful.pushCanvas(SHADOW_CANVAS)
     love.graphics.setBlendMode("subtractive")
-      useful.oval("fill", self.x, self.y, self.heat*8, self.heat*8*VIEW_OBLIQUE)
+      useful.oval("fill", self.x, self.y, self.heat*8, self.heat*8)
     love.graphics.setBlendMode("alpha")
   useful.popCanvas()
 end

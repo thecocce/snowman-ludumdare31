@@ -158,17 +158,17 @@ love.load = function()
   --fudge.set({ monkey = true })
   --foregroundb = fudge.new("assets/foreground", { npot = false })
 
-	FONT_TINY = love.graphics.newFont("assets/ttf/Romulus_by_pix3m.ttf", 12)
+	FONT_TINY = love.graphics.newFont("assets/ttf/Norse.ttf", 12)
 	FONT_TINY:setFilter("nearest", "nearest", 1)
 
-	FONT_SMALL = love.graphics.newFont("assets/ttf/Romulus_by_pix3m.ttf", 32)
+	FONT_SMALL = love.graphics.newFont("assets/ttf/Norse.ttf", 32)
 	FONT_SMALL:setFilter("nearest", "nearest", 1)
 	love.graphics.setFont(FONT_SMALL)
 
-	FONT_MEDIUM = love.graphics.newFont("assets/ttf/Romulus_by_pix3m.ttf", 48)
+	FONT_MEDIUM = love.graphics.newFont("assets/ttf/Norse.ttf", 48)
 	FONT_MEDIUM:setFilter("nearest", "nearest", 1)
 
-	FONT_BIG = love.graphics.newFont("assets/ttf/Romulus_by_pix3m.ttf", 64)
+	FONT_BIG = love.graphics.newFont("assets/ttf/Norse.ttf", 64)
 	FONT_BIG:setFilter("nearest", "nearest", 1)
 
 --[[

@@ -322,7 +322,7 @@ function Human:draw(x, y)
 
 
   -- body
-  love.graphics.setColor(122, 178, 128)
+  love.graphics.setColor(178, 122, 122)
     local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
     love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
@@ -404,6 +404,8 @@ function Human:eventCollision(other, dt)
   if other:isType("Human") then
     other:shoveAwayFrom(self, 100*dt)
   elseif other:isType("Bonfire") then
+    self:shoveAwayFrom(other, 500*dt)
+  elseif other:isType("Tree") then
     self:shoveAwayFrom(other, 500*dt)
   elseif other:isType("TorchFallen") then
     if not self.torch then

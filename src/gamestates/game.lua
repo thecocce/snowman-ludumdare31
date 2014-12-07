@@ -27,7 +27,7 @@ Internal state
 
 local picked_human = nil
 local t = 0
-local wave = 1
+local wave = 0
 
 current_temperature = 0
 current_windspeed = 1
@@ -51,6 +51,8 @@ end
 
 
 function state:enter()
+	SHADOW_CANVAS:clear()
+
 	-- reset darkness canvas
 	useful.pushCanvas(DARKNESS_CANVAS)
 		useful.bindBlack()
@@ -64,8 +66,11 @@ function state:enter()
 	wave = 1
 
 	-- repopulate world
-	GameObject.mapToType("Bonfire", function(o) o.purge = true end)
-	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
+	-- ... fire
+	local h
+	GameObject.mapToType("Bonfire", function(o) h = o.heat o.purge = true end)
+	Bonfire(WORLD_W*0.5, WORLD_H*0.5).heat = h
+	-- ... people
 	for i = 1, 6 do
 		local angle = math.random()*math.pi*2
 		local distance = 150*(1 + 0.1*math.random())
@@ -74,12 +79,21 @@ function state:enter()
 			math.sin(angle)*distance + WORLD_H*0.5, 
 			i < 4)
 	end
+	-- ... trees
+	for i = 1, 8 do
+		local angle = math.random()*math.pi*2
+		local distance = WORLD_W*(0.3 + 0.2*(i - 1)/8)
+		Tree(
+			math.cos(angle)*distance + WORLD_W*0.5, 
+			math.sin(angle)*distance + WORLD_H*0.5)
+	end
 end
 
 
 function state:leave()
 	GameObject.purgeAll()
 	picked_human = nil
+	SHADOW_CANVAS:clear()
 end
 
 --[[------------------------------------------------------------
@@ -173,8 +187,15 @@ function state:draw()
 		love.graphics.setBlendMode("subtractive")
 			love.graphics.circle("fill", mx, my, 4)
 		love.graphics.setBlendMode("alpha")
-	useful.popCanvas()
 
+		-- score
+		if (day_night > 0.2) and (day_night < 0.4) then
+			love.graphics.setFont(FONT_MEDIUM)
+				love.graphics.printf("Day " .. tostring(wave),
+				 WORLD_W*(0.5 - 0.2), WORLD_H*0.05, WORLD_W*0.4, "center")
+		end
+
+	useful.popCanvas()
 	-- debug overlay
 	if DEBUG then
 		love.graphics.setFont(FONT_SMALL)

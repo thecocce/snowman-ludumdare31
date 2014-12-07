@@ -26,6 +26,7 @@ local Torch = Class
     self.target_x, self.target_y = tx, ty
     self.t = 0
     self.z = 0
+    self.startz = 0
     self.dist = Vector.dist(x, y, tx, ty)
     self.dx, self.dy = (tx - x)/self.dist, (ty - y)/self.dist
     self.prev_x, self.prev_y = x, y
@@ -46,7 +47,7 @@ Game loop
 function Torch:update(dt)
   -- progress and position
   local prev_t = self.t
-  self.t = self.t + math.min(3*dt, 300*dt/self.dist)
+  self.t = self.t + math.min(dt, 100*dt/self.dist)
   self.prev_x, self.prev_y = self.x, self.y
   self.x = useful.lerp(self.start_x, self.target_x, self.t)
   self.y = useful.lerp(self.start_y, self.target_y, self.t)
@@ -54,7 +55,7 @@ function Torch:update(dt)
   -- height
   local life = 1-self.t
   local parabola = -(2*life-1)*(2*life-1) + 1
-  self.z = parabola*256*self.dist/WORLD_W
+  self.z = life*self.startz + parabola*256*self.dist/WORLD_W
 
   -- die
   if life <= 0 then
@@ -92,10 +93,6 @@ function Torch:update(dt)
 end
 
 function Torch:draw(x, y)
-  if self.heat > 0 then
-    light(x, y, self.z, 2)
-    light(x, y - self.z, 0, 1)
-  end
 
   useful.bindBlack()
     local s = self.spin
@@ -112,10 +109,21 @@ function Torch:draw(x, y)
       -- down
       love.graphics.rectangle("fill", self.x - 1, self.y - self.z, 2, 12)
     end
-  love.graphics.setColor(255, 100, 55)
+  love.graphics.setColor(255, 100, 55, 255*self.heat)
     love.graphics.rectangle("fill", self.x - 1, self.y - 1 - self.z, 2, 2)
   useful.bindWhite()
 
+
+  -- shadow or light
+  if self.heat > 0 then
+    light(x, y, self.z, 2)
+    light(x, y - self.z, 0, 1)
+  else
+    useful.pushCanvas(SHADOW_CANVAS)
+      local shad_r = math.min(4, 196/self.z)
+      useful.oval("fill", self.x, self.y, shad_r, shad_r*VIEW_OBLIQUE)
+    useful.popCanvas()
+  end
 
 end
 
@@ -124,24 +132,40 @@ Collisions
 --]]--
 
 function Torch:eventCollision(other, dt)
+  if self.alreadyHit[other] then
+    return
+  end
+
   if self.z < 96 then
-    if other:isType("Monster") then
-
-      if not self.alreadyHit[other] then
-        if self.heat > 0.5 and not other:isOnFire() then
-          other:ignite()
-        end
-        self.purge = true
-        local dx, dy = self.prev_x - self.x, self.prev_y - self.y
-        Torch(self.x, self.y, self.x + 4*dx, self.y + 4*dy, self.fuel, self.heat - 0.5)
-
-        self.alreadyHit[other] = true
+    if other:isType("Monster") and not other:isOnFire() then
+      -- set monster on fire
+      if self.heat > 0.5 then
+        other:ignite()
       end
+      -- bounce off
+      self.purge = true
+      local dx, dy = self.prev_x - self.x, self.prev_y - self.y
+      local t = Torch(self.x, self.y, self.x + 16*dx, self.y + 16*dy, self.fuel, self.heat - 0.5)
+      t.alreadyHit[other] = true
+      t.startz = self.z
 
     elseif other:isType("Bonfire") then
       self.purge = true
       other:addWood(self.fuel)
     end
+  end
+
+  if other:isType("Tree") and not other:isOnFire() then
+    -- start fire
+    if self.heat > 0.5 then
+      other:ignite(0.5)
+    end
+    -- bounce off
+    self.purge = true
+    local dx, dy = self.prev_x - self.x, self.prev_y - self.y
+    local t = Torch(self.x, self.y, self.x + 4*dx, self.y + 4*dy, self.fuel, self.heat - 0.5)
+    t.alreadyHit[other] = true
+    t.startz = self.z
   end
 end
 

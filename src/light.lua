@@ -40,31 +40,41 @@ function light(x, y, z, intensity, r, g, b)
 
   local max_size = 0
 
-  for i = intensity, 0, -0.2 do
-    local x = x + useful.signedRand(2 + 0.1*i)
-    local y = y + useful.signedRand(2 + 0.1*i)
-    local z = z + math.max(0.1, useful.signedRand(2 + 0.1*i))
 
-    local size = math.max(0, power*i*32 - z/128)
-    if size > max_size then
-      max_size = size
+
+  -- pre-randomise
+  local step = intensity/10
+  local params = {}
+  for i = intensity, 0, -step do
+    local s = math.max(0, power*i*32 - z/128)
+    if s > max_size then
+      max_size = s
     end
-
-    -- erase darkness
-    useful.pushCanvas(ALPHA_CANVAS)
-      useful.bindWhite(i/intensity*255)
-      useful.oval("fill", x, y, size, size*VIEW_OBLIQUE)
-    useful.popCanvas()
-
-    -- colour light
-    useful.pushCanvas(COLOUR_CANVAS)
-      love.graphics.setColor(255, 55, 10, i/intensity*32)
-      love.graphics.setBlendMode("additive")
-        useful.oval("fill", x, y, size, size*VIEW_OBLIQUE)
-      love.graphics.setBlendMode("alpha")
-    useful.popCanvas()
-
+    table.insert(params, {
+      x = x + useful.signedRand(2 + 0.1*i),
+      y = y + useful.signedRand(2 + 0.1*i),
+      z = z + math.max(0.1, useful.signedRand(2 + 0.1*i)),
+      size = s,
+      intensity = i/intensity
+    })
   end
-  useful.bindWhite()
 
+  -- erase darkness
+  useful.pushCanvas(ALPHA_CANVAS)
+    for _, p in ipairs(params) do
+      useful.bindWhite(p.intensity*255)
+      useful.oval("fill", p.x, p.y, p.size, p.size*VIEW_OBLIQUE)
+    end
+  useful.popCanvas()
+
+  -- colour light
+  useful.pushCanvas(COLOUR_CANVAS)
+    for _, p in ipairs(params) do
+      love.graphics.setColor(255, 55, 10, p.intensity*32)
+      love.graphics.setBlendMode("additive")
+        useful.oval("fill", p.x, p.y, p.size, p.size*VIEW_OBLIQUE)
+      love.graphics.setBlendMode("alpha")
+    end
+  useful.popCanvas()
+  useful.bindWhite()
 end

@@ -23,7 +23,7 @@ local Bonfire = Class
   init = function(self, x, y)
     GameObject.init(self, x, y, 12)
     self.fuel = 1
-    self.heat = 1
+    self.heat = 0.1
     self.t = math.random()
     self.light = Light(self.x, self.y)
   end,
@@ -49,15 +49,20 @@ end
 
 function Bonfire:update(dt)
 
-  -- exponential decline of heat
-  self.heat = math.max(0, self.heat - 0.002*self.heat*dt)
+  if self.fuel <= 0 then
+    -- exponential decline of heat
+    self.heat = math.max(0, self.heat - 0.1*self.heat*dt)
+  else
+    -- exponential rise of heat
+    self.heat = math.min(1, self.heat + 0.1*self.heat*dt)
+  end
 
   -- linear decline of fuel
-  if self.heat > 0.2 then
+  if self.heat > 0 then
     self.fuel = self.fuel - 0.001*self.heat*dt
-  else
-    self.heat = 0
   end
+
+  -- let there be light
   self.light.r = 128*self.heat
 
   -- extinguish if no fuel is left
@@ -96,15 +101,17 @@ function Bonfire:draw(x, y)
   	light(x, y, 0, 8*self.heat)
   end
   love.graphics.setColor(32, 32, 32)
-  	useful.oval("fill", self.x, self.x, 12, 12*VIEW_OBLIQUE)
+  	useful.oval("fill", self.x, self.y, 12, 12*VIEW_OBLIQUE)
   love.graphics.setColor(255, 100, 55, 255*self.heat)
-  	useful.oval("fill", self.x, self.x, 5, 5*VIEW_OBLIQUE)
+  	useful.oval("fill", self.x, self.y, 5, 5*VIEW_OBLIQUE)
   useful.bindWhite()
 
   if DEBUG then
-    love.graphics.setFont(FONT_TINY)
-    love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y)
-    love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y + 16)
+    useful.pushCanvas(UI_CANVAS)
+      love.graphics.setFont(FONT_TINY)
+      love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y)
+      love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y + 16)
+    useful.popCanvas()
   end
 
 end
@@ -112,7 +119,7 @@ end
 function Bonfire:antiShadow()
 	useful.pushCanvas(SHADOW_CANVAS)
 	  love.graphics.setBlendMode("subtractive")
-	    useful.oval("fill", self.x, self.y, self.heat*18, self.heat*18*VIEW_OBLIQUE)
+	    useful.oval("fill", self.x, self.y, self.heat*12, self.heat*12*VIEW_OBLIQUE)
 	  love.graphics.setBlendMode("alpha")
 	useful.popCanvas()
 end

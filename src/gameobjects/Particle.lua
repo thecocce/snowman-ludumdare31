@@ -16,6 +16,8 @@ local Particle = {
 	type = GameObject.newType("Particle")
 }
 
+local n_particles = 0
+
 --[[------------------------------------------------------------
 Fire
 --]]--
@@ -38,12 +40,14 @@ local Fire = Class
     self.sizeMult = (sizeMult or 1)
     size = self.sizeMult*8
     self.size = size*(1 + 0.5*math.random())
+
+    n_particles = n_particles + 1
   end,
 }
 Fire:include(GameObject)
 
 function Fire:update(dt)
-	self.t = self.t + self.dieSpeed*dt
+	self.t = self.t + self.dieSpeed*dt*(1 + n_particles/75)
 	self.r = math.max(0, math.sin(self.t*math.pi)*self.size)
 	if self.t > 1 then
 		self.purge = true
@@ -60,6 +64,10 @@ function Fire:draw(x, y)
 	useful.bindWhite()
 	light(x, y, self.z, (1 - self.t)*self.sizeMult)
 	light(x, y - self.z, 0, (1 - self.t)*self.sizeMult)
+end
+
+function Fire:onPurge()
+	n_particles = n_particles - 1
 end
 
 Particle.Fire = Fire
@@ -83,12 +91,14 @@ local Smoke = Class
     size = (size or 1)*10
     self.size = size*(1 + 0.5)*math.random()
     self.dieSpeed = 0.5 + math.random()*0.7
+
+    n_particles = n_particles + 1
   end,
 }
 Smoke:include(GameObject)
 
 function Smoke:update(dt)
-	self.t = self.t + self.dieSpeed*dt
+	self.t = self.t + self.dieSpeed*dt*(1 + n_particles/75)
 	self.r = math.max(1, math.sin(self.t*math.pi)*self.size)
 	if self.t > 1 then
 		self.purge = true
@@ -109,6 +119,11 @@ function Smoke:draw(x, y)
 	love.graphics.setColor(self.a, self.a, self.a)
 		useful.oval("fill", x, y - self.z, r, r)
 	useful.bindWhite()
+end
+
+
+function Smoke:onPurge()
+	n_particles = n_particles - 1
 end
 
 Particle.Smoke = Smoke
