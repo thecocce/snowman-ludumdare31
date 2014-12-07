@@ -100,7 +100,7 @@ function Monster:update(dt)
       
       if self:isNear(t) then
         -- attack target
-        t.purge = true
+        t:kill()
         self.target = nil
       else
         -- move to target

@@ -272,8 +272,9 @@ function Human:update(dt)
   end
 
   -- extinguish if no fuel is left
-  if self.fuel < 0.1 then
+  if self.fuel < 0.3 then
     self.torch = false
+    Torch(self.x, self.y, self.x, self.y, self.fuel, self.heat).startz = 32
   end
 
   -- breath
@@ -426,7 +427,7 @@ function Human:eventCollision(other, dt)
   elseif other:isType("Tree") then
     self:shoveAwayFrom(other, 500*dt)
   elseif other:isType("TorchFallen") then
-    if not self.torch then
+    if not self.torch and other.fuel >= 0.3 then
       self.fuel = other.fuel
       self.heat = other.heat
       self.torch = true
