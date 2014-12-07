@@ -95,7 +95,7 @@ function state:draw()
 	love.graphics.setColor(200, 200, 255)
 		love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 	useful.bindWhite()
-	
+
 	-- shadows
 	GameObject.mapToAll(function(o) if o.antiShadow then o:antiShadow() end end)
 	useful.bindBlack(128)
@@ -110,13 +110,15 @@ function state:draw()
 	bake_light()
 
 	-- mouse
-	useful.pushCanvas(UI_CANVAS)
-		local mx, my = love.mouse.getPosition()
-		love.graphics.circle("fill", mx, my, 6)
-		love.graphics.setBlendMode("subtractive")
-			love.graphics.circle("fill", mx, my, 4)
-		love.graphics.setBlendMode("alpha")
-	useful.popCanvas()
+	if not desires_leave then
+		useful.pushCanvas(UI_CANVAS)
+			local mx, my = love.mouse.getPosition()
+			love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+			love.graphics.setBlendMode("subtractive")
+				love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+			love.graphics.setBlendMode("alpha")
+		useful.popCanvas()
+	end
 
 	
 	love.graphics.setColor(200, 200, 255)

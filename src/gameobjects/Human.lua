@@ -29,9 +29,9 @@ local Human = Class
     self.t = math.random()
 
     self.torch = torch
-    self.torchFuel = (torch and 1) or 0
-    self.torchHeat = 0
-    self.torchLight = Light(self.x, self.y)
+    self.fuel = (torch and 1) or 0
+    self.heat = 0
+    self.light = Light(self.x, self.y)
 
 
     self.stress = 0
@@ -52,7 +52,7 @@ Destruction
 --]]--
 
 function Human:onPurge()
-  self.torchLight.purge = true
+  self.light.purge = true
 end
 
 --[[------------------------------------------------------------
@@ -82,12 +82,12 @@ Torch
 --]]--
 
 function Human:torchHeight()
-  return 12*self.torchFuel + 16 - 2*math.cos(4*self.t*math.pi)
+  return 12*self.fuel + 16 - 2*math.cos(4*self.t*math.pi)
 end
 
 function Human:drawTorch()
   local x, y = self.x, self.y
-  local len = 12*self.torchFuel
+  local len = 12*self.fuel
 
 
 
@@ -102,7 +102,7 @@ function Human:drawTorch()
       -- draw vertical
       love.graphics.rectangle("fill", 
         x + self.torch_x - 1, y + self.torch_y*VIEW_OBLIQUE - self.torch_h, 2, len)
-      love.graphics.setColor(255, 100, 55, 255*self.torchHeat)
+      love.graphics.setColor(255, 100, 55, 255*self.heat)
         love.graphics.rectangle("fill", 
           x + self.torch_x - 1, y + self.torch_y*VIEW_OBLIQUE - self.torch_h, 2, 2)
     end
@@ -177,11 +177,11 @@ Game loop
 function Human:update(dt)
 
   -- update torch
-  self.torchLight.x, self.torchLight.y = self.x + self.torch_x, self.y + self.torch_y
-  if self.torch and (self.torchHeat > 0) then
-    self.torchLight.r = self.torchHeat*96
+  self.light.x, self.light.y = self.x + self.torch_x, self.y + self.torch_y
+  if self.torch and (self.heat > 0) then
+    self.light.r = self.heat*96
   else
-    self.torchLight.r = 0
+    self.light.r = 0
   end
   
   -- heartbeat
@@ -196,7 +196,7 @@ function Human:update(dt)
   if not self.picked 
   and not isLight()
   and self.nearestLight 
-  and (not self.torch or (self.torchHeat <= 0)) 
+  and (not self.torch or (self.heat <= 0)) 
   then
     local nl = self.nearestLight
     local dx, dy, dist = Vector.normalize(nl.x - self.x, nl.y - self.y)
@@ -212,7 +212,7 @@ function Human:update(dt)
   -- relit torch at bonfire
   local bonfire, dist2 = GameObject.getNearestOfType("Bonfire", self.x, self.y)
   if bonfire and self:isNear(bonfire) then
-    self.torchHeat = math.max(0.3, math.min(1, self.torchHeat + dt))
+    self.heat = math.max(0.3, math.min(1, self.heat + dt))
     self.bonfire = bonfire
     self.desired_facex, self.desired_facey = bonfire.x - self.x, bonfire.y - self.y
   else
@@ -251,17 +251,17 @@ function Human:update(dt)
   end
 
   -- exponential decline of torch heat
-  self.torchHeat = math.max(0, self.torchHeat - 0.01*self.torchHeat*dt)
+  self.heat = math.max(0, self.heat - 0.01*self.heat*dt)
 
   -- linear decline of torch fuel
-  if self.torchHeat >= 0.2 then
-    self.torchFuel = self.torchFuel - 0.001*self.torchHeat*dt
+  if self.heat >= 0.2 then
+    self.fuel = self.fuel - 0.001*self.heat*dt
   else
-    self.torchHeat = 0
+    self.heat = 0
   end
 
   -- extinguish if no fuel is left
-  if self.torchFuel < 0.1 then
+  if self.fuel < 0.1 then
     self.torch = false
   end
 
@@ -277,13 +277,13 @@ function Human:update(dt)
   self.torch_h = self:torchHeight()
 
   -- fire particles
-  if self.torch and self.torchHeat > 0 then
+  if self.torch and self.heat > 0 then
     self.particles = self.particles + dt*10
     if self.particles > 1 then
 
       local x, y = self.x + self.torch_x, self.y + self.torch_y
 
-      if math.random()*1.2 > self.torchHeat then
+      if math.random()*1.2 > self.heat then
         local angle = math.random()*math.pi*2
         local speed = 6 + math.random()*4
         local dx, dy = math.cos(angle), math.sin(angle)
@@ -344,8 +344,8 @@ function Human:draw(x, y)
   end
 
   -- torch light
-  if self.torch and self.torchHeat > 0 then
-    light(x + self.torch_x, y + self.torch_y, 64, self.torchHeat*3)
+  if self.torch and self.heat > 0 then
+    light(x + self.torch_x, y + self.torch_y, 64, self.heat*3)
   end
 
   -- shadow
@@ -359,8 +359,8 @@ function Human:draw(x, y)
     love.graphics.setFont(FONT_TINY)
     useful.pushCanvas(UI_CANVAS)
       if self.torch then
-        love.graphics.print("heat:" .. tostring(math.floor(self.torchHeat*10)/10), self.x, self.y - 16)
-        love.graphics.print("fuel:" .. tostring(math.floor(self.torchFuel*10)/10), self.x, self.y)
+        love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y - 16)
+        love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y)
       end
 
     if self.nearestLight then
@@ -373,7 +373,7 @@ end
 
 function Human:antiShadow()
 
-  if self.torch and self.torchHeat > 0 then
+  if self.torch and self.heat > 0 then
     local x, y = self.x + self.torch_x, self.y + self.torch_y
     useful.pushCanvas(SHADOW_CANVAS)
       love.graphics.setBlendMode("subtractive")
@@ -388,7 +388,7 @@ Combat
 --]]--
 
 function Human:throw(x, y)
-  local thrown = Torch(self.x, self.y, x, y, self.torchFuel, self.torchHeat)
+  local thrown = Torch(self.x, self.y, x, y, self.fuel, self.heat)
   self.torch = false
 end
 
@@ -409,8 +409,8 @@ function Human:eventCollision(other, dt)
     self:shoveAwayFrom(other, 500*dt)
   elseif other:isType("TorchFallen") then
     if not self.torch then
-      self.torchFuel = other.fuel
-      self.torchHeat = other.heat
+      self.fuel = other.fuel
+      self.heat = other.heat
       self.torch = true
       other.purge = true
     end

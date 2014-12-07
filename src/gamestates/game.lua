@@ -28,6 +28,7 @@ Internal state
 local picked_human = nil
 local t = 0
 local wave = 0
+local leaving = nil
 
 current_temperature = 0
 current_windspeed = 1
@@ -64,6 +65,7 @@ function state:enter()
 	picked_human = nil
 	day_night = 0
 	wave = 1
+	leaving = nil
 
 	-- repopulate world
 	-- ... fire
@@ -102,7 +104,7 @@ Callbacks
 
 function state:keypressed(key, uni)
   if key == "escape" then
-    gamestate.switch(title)
+    leaving = 0
   end
 end
 
@@ -133,19 +135,46 @@ function state:update(dt)
 
 	local mx, my = love.mouse.getPosition()
 
-	-- calculate time of day
-	day_night = day_night + dt/60
-	if day_night > 1 then
-		-- night falls
-		day_night = day_night - 2
-		-- spawn monsters
-		for i = 1, wave do
-			local angle = math.pi*2*math.random()
-			Monster(
-				math.cos(angle)*WORLD_W*(1 + math.random()*3), 
-				math.sin(angle)*WORLD_H*(1 + math.random()*3))
+	-- ease out
+	if leaving then
+		
+		-- snuff out the lights
+		GameObject.mapToAll(function(o)
+			if o.heat then
+				o.heat = useful.lerp(o.heat, 0, leaving)
+			end
+			if o.fuel then
+				o.fuel = useful.lerp(o.heat, 0, leaving)
+			end
+		end)
+
+		-- darkness falls
+		if day_night > 0.5 then
+			day_night = useful.lerp(day_night, 1, math.min(1, 1.1*leaving))
+		elseif day_night > 0 then
+			day_night = useful.lerp(day_night, 0, math.min(1, 1.1*leaving))
 		end
-		wave = wave + 1
+
+		-- leave the state
+		leaving = leaving + dt*0.5
+		if leaving >= 1 then
+			gamestate.switch(title)
+		end
+	else
+		-- calculate time of day
+		day_night = day_night + dt/60
+		if day_night > 1 then
+			-- night falls
+			day_night = day_night - 2
+			-- spawn monsters
+			for i = 1, wave do
+				local angle = math.pi*2*math.random()
+				Monster(
+					math.cos(angle)*WORLD_W*(1 + math.random()*3), 
+					math.sin(angle)*WORLD_H*(1 + math.random()*3))
+			end
+			wave = wave + 1
+		end
 	end
 
 	-- temperature depends on time of day and wind
@@ -180,22 +209,26 @@ function state:draw()
 	-- light overlays
 	bake_light()
 
-	-- mouse
-	useful.pushCanvas(UI_CANVAS)
-		local mx, my = love.mouse.getPosition()
-		love.graphics.circle("fill", mx, my, 6)
-		love.graphics.setBlendMode("subtractive")
-			love.graphics.circle("fill", mx, my, 4)
-		love.graphics.setBlendMode("alpha")
+	-- UI
+	if not leaving then
+		useful.pushCanvas(UI_CANVAS)
+			-- mouse
+			local mx, my = love.mouse.getPosition()
+			love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+			love.graphics.setBlendMode("subtractive")
+				love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+			love.graphics.setBlendMode("alpha")
 
-		-- score
-		if (day_night > 0.2) and (day_night < 0.4) then
-			love.graphics.setFont(FONT_MEDIUM)
-				love.graphics.printf("Day " .. tostring(wave),
-				 WORLD_W*(0.5 - 0.2), WORLD_H*0.05, WORLD_W*0.4, "center")
-		end
+			-- score
+			if (day_night > 0.2) and (day_night < 0.4) then
+				love.graphics.setFont(FONT_MEDIUM)
+					love.graphics.printf("Day " .. tostring(wave),
+					 WORLD_W*(0.5 - 0.2), WORLD_H*0.05, WORLD_W*0.4, "center")
+			end
 
-	useful.popCanvas()
+		useful.popCanvas()
+	end
+
 	-- debug overlay
 	if DEBUG then
 		love.graphics.setFont(FONT_SMALL)
