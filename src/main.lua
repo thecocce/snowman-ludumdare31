@@ -208,7 +208,10 @@ love.draw = function()
 		love.graphics.draw(WORLD_CANVAS)
 
 		local mx, my = love.mouse.getPosition()
-		love.graphics.circle("line", mx, my, 4)
+
+		love.graphics.setLineWidth(2)
+			love.graphics.circle("line", mx, my, 4)
+		love.graphics.setLineWidth(1)
 
 		useful.recordGIF("x")
 	love.graphics.pop()

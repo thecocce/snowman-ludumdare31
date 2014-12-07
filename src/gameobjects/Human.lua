@@ -31,6 +31,7 @@ local Human = Class
     self.torch = false
     self.torchFuel = 0
     self.torchHeat = 0
+    self.stress = 0
 
     self.particles = math.random()
 
@@ -175,27 +176,39 @@ function Human:update(dt)
   if bonfire and self:isNear(bonfire) then
     self.torchHeat = math.max(0.3, math.min(1, self.torchHeat + dt))
     self.bonfire = bonfire
+    self.desired_facex, self.desired_facey = bonfire.x - self.x, bonfire.y - self.y
   else
     self.bonfire = false
   end
 
-  -- move to mouse if picked and/or turn to face desired direction
+  -- move to mouse if picked
   if self.picked then
     local mx, my = love.mouse.getPosition()
     local dx, dy, dist = Vector.normalize(mx - self.x, my - self.y) 
-    self:turnTowards(dx, dy, 5*dt)
     if dist < self.r*2 then
+      -- stop
       self.dx, self.dx = useful.lerp(self.dx, 0, dt), useful.lerp(self.dy, 0, dt)
     else
+      -- move
       local speed = SPEED*dist/64
       self.dx, self.dy = dx*speed, dy*speed
+
+      -- moving is stressful!
+      self.stress = math.min(1, self.stress + speed*dt*0.02)
     end
-    self.desired_facex, self.desired_facey = nil, nil
-  else
-    if self.desired_facex and self.desired_facey then
-      if self:turnTowards(self.desired_facex, self.desired_facey, dt) then
-        self.desired_facex, self.desired_facey = 0, 0
-      end
+    -- turn
+    if not self.bonfire then
+      self.desired_facex, self.desired_facey = dx, dy
+    end
+  end
+
+  -- calm down man!
+  self.stress = math.max(0, self.stress - 0.1*dt)
+
+  -- turn to face desired direction
+  if self.desired_facex and self.desired_facey then
+    if self:turnTowards(self.desired_facex, self.desired_facey, 3*dt) then
+      self.desired_facex, self.desired_facey = nil, nil
     end
   end
 
@@ -215,7 +228,7 @@ function Human:update(dt)
   end
 
   -- breath
-  self.t = self.t + dt*0.3
+  self.t = self.t + dt*0.3*(1 + 2*self.stress)
   if self.t > 1 then
     self.t = self.t - 1
     if math.random() > 0.7 then
@@ -274,6 +287,11 @@ function Human:draw(x, y)
     local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
     love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
+  if self.picked then
+    love.graphics.setLineWidth(2)
+      love.graphics.rectangle("line", self.x - w, self.y - h, 2*w, h)
+    love.graphics.setLineWidth(1)
+  end
 
   -- torch in front
   if self.torch and self.torch_y >= 0 then

@@ -66,6 +66,10 @@ function Monster:setState(newStateClass, ...)
   self.state = newState
 end
 
+function Monster:isAfraid()
+  return self.fire or isDaytime()
+end
+
 
 --[[------------------------------------------------------------
 Game loop
@@ -73,7 +77,10 @@ Game loop
 
 function Monster:update(dt)
 
-  if self.fire or isDaytime() then
+  -- heartbeat
+  self.heart = self.heart + dt
+
+  if self:isAfraid() then
     -- run away!
     local dx, dy, dist = Vector.normalize(self.x - WORLD_W*0.5, self.y - WORLD_H*0.5)
     self.dx, self.dy = dx*SPEED_FLEE, dy*SPEED_FLEE
@@ -81,8 +88,6 @@ function Monster:update(dt)
       self.purge = true
     end
   else
-
-    self.heart = self.heart + dt
 
     if not self.target or self.heart > 1 then
       self.target = GameObject.getNearestOfType("Human", self.x, self.y)
@@ -99,10 +104,6 @@ function Monster:update(dt)
         self.dx, self.dy = dx*SPEED, dy*SPEED
       end
 
-    end
-
-    if self.heart > 1 then
-      self.heart = self.heart - 1
     end
   end
 
@@ -133,17 +134,28 @@ function Monster:update(dt)
     end
   end
 
+  -- loop heart beat
+  if self.heart > 1 then
+    self.heart = self.heart - 1
+  end
+
   GameObject.update(self, dt)
 end
 
 function Monster:draw(x, y)
 
+  -- breathe air
+  local breath = math.sin(((self:isAfraid() and 4) or 1)*self.heart*math.pi)
+
+  -- burn!
   if self.fire then
-    light(self.x, self.y, 32, 3)
+    light(self.x, self.y, 32, 1)
   end
 
+  -- body
+  local w, h = (7 + breath), 32 - breath 
   love.graphics.setColor(122, 152, 178)
-    love.graphics.rectangle("fill", self.x - 7, self.y - 32, 14, 32)
+    love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
   
   -- shadow
