@@ -122,6 +122,8 @@ FONT_SMALL = nil
 FONT_MEDIUM = nil
 FONT_BIG = nil
 
+FONT_DEBUG = nil
+
 UI_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 
 -------------------------------------------------------------------------------
@@ -175,6 +177,8 @@ love.load = function()
 	FONT_BIG = love.graphics.newFont("assets/ttf/Norse.ttf", 64)
 	FONT_BIG:setFilter("nearest", "nearest", 1)
 
+	FONT_DEBUG = love.graphics.newFont(10)
+
 --[[
 	audio:load_sound("missile", 1, 3)
 	audio:load_sound("explosion", 1, 6)
@@ -202,7 +206,6 @@ love.load = function()
 end
 
 love.draw = function()
-
 	useful.pushCanvas(WORLD_CANVAS)
 		gamestate.draw()
 	useful.popCanvas()

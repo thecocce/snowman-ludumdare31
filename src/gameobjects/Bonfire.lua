@@ -20,9 +20,9 @@ local Bonfire = Class
 {
   type = GameObject.newType("Bonfire"),
 
-  init = function(self, x, y)
+  init = function(self, x, y, starting_fuel)
     GameObject.init(self, x, y, 12)
-    self.fuel = 1
+    self.fuel = (starting_fuel or 1)
     self.heat = 0.1
     self.t = math.random()
     self.light = Light(self.x, self.y)
@@ -108,7 +108,7 @@ function Bonfire:draw(x, y)
 
   if DEBUG then
     useful.pushCanvas(UI_CANVAS)
-      love.graphics.setFont(FONT_TINY)
+      love.graphics.setFont(FONT_DEBUG)
       love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y)
       love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y + 16)
     useful.popCanvas()

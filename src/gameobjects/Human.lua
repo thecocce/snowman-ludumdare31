@@ -369,7 +369,7 @@ function Human:draw(x, y)
 
   -- debug data
   if DEBUG then
-    love.graphics.setFont(FONT_TINY)
+    love.graphics.setFont(FONT_DEBUG)
     useful.pushCanvas(UI_CANVAS)
       if self.torch then
         love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y - 16)

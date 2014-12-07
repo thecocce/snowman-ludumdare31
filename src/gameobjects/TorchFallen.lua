@@ -50,6 +50,9 @@ function TorchFallen:update(dt)
   if self.heat > 0.2 then
     self.fuel = self.fuel - 0.001*self.heat*dt
   else
+    if self.fuel < 0.3 then
+      self.fuel = self.fuel - 0.1*dt
+    end
     self.heat = 0
   end
 
@@ -111,7 +114,9 @@ function TorchFallen:draw(x, y)
 
       local shad_x = (self.spin*2 - 1)
 
-      useful.oval("fill", self.x + shad_x*8, self.y, 8, 4*VIEW_OBLIQUE)
+      useful.oval("fill", 
+        self.x + shad_x*8*self.fuel, 
+        self.y, 8*self.fuel, 4*VIEW_OBLIQUE*self.fuel)
     useful.popCanvas()
   end
 end

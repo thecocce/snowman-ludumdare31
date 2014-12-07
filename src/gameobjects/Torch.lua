@@ -95,19 +95,20 @@ end
 function Torch:draw(x, y)
 
   useful.bindBlack()
+    local l = 12*self.fuel
     local s = self.spin
     if s < 0.25 then
       -- left
-      love.graphics.rectangle("fill", self.x - 12, self.y - 1 - self.z, 12, 2)
+      love.graphics.rectangle("fill", self.x - l, self.y - 1 - self.z, l, 2)
     elseif s < 0.5 then
       -- up
-      love.graphics.rectangle("fill", self.x - 1, self.y - 12 - self.z, 2, 12)
+      love.graphics.rectangle("fill", self.x - 1, self.y - l - self.z, 2, l)
     elseif s < 0.75 then
       -- right
-      love.graphics.rectangle("fill", self.x, self.y - 1 - self.z, 12, 2)
+      love.graphics.rectangle("fill", self.x, self.y - 1 - self.z, l, 2)
     elseif s <= 1 then
       -- down
-      love.graphics.rectangle("fill", self.x - 1, self.y - self.z, 2, 12)
+      love.graphics.rectangle("fill", self.x - 1, self.y - self.z, 2, l)
     end
   love.graphics.setColor(255, 100, 55, 255*self.heat)
     love.graphics.rectangle("fill", self.x - 1, self.y - 1 - self.z, 2, 2)
@@ -120,7 +121,7 @@ function Torch:draw(x, y)
     light(x, y - self.z, 0, 1)
   else
     useful.pushCanvas(SHADOW_CANVAS)
-      local shad_r = math.min(4, 196/self.z)
+      local shad_r = math.min(4, 196/self.z)*self.fuel
       useful.oval("fill", self.x, self.y, shad_r, shad_r*VIEW_OBLIQUE)
     useful.popCanvas()
   end

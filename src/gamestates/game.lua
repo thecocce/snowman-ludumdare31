@@ -29,6 +29,7 @@ local picked_human = nil
 local t = 0
 local wave = 0
 local leaving = nil
+local exit = nil
 local defeat = nil
 
 current_temperature = 0
@@ -69,6 +70,7 @@ function state:enter()
 	wave = 1
 	leaving = nil
 	defeat = false
+	exit = false
 
 	-- repopulate world
 	-- ... fire
@@ -109,6 +111,13 @@ Callbacks
 
 function state:keypressed(key, uni)
   if key == "escape" then
+  	if leaving then
+  		if defeat then
+  			defeat = false
+  		else
+  			exit = true
+  		end
+  	end
     leaving = 0
   	if picked_human then
 			picked_human:unpick()
@@ -166,7 +175,7 @@ function state:update(dt)
 				o.heat = useful.lerp(o.heat, 0, leaving)
 			end
 			if o.fuel then
-				o.fuel = useful.lerp(o.heat, 0, leaving)
+				o.fuel = useful.lerp(o.fuel, 0, leaving)
 			end
 		end)
 
@@ -180,10 +189,19 @@ function state:update(dt)
 		-- all music halts
 		music:setVolume(1 - leaving)
 
+		-- fade out win if exiting
+		if exit then
+			sound_wind:setVolume((1 - leaving)*wind_base_base)
+		end
+
 		-- leave the state
 		leaving = leaving + dt*0.5
 		if leaving >= 1 then
-			gamestate.switch(defeat and gameover or title)
+			if exit then
+				love.event.push("quit")
+			else
+				gamestate.switch(defeat and gameover or title)
+			end
 		end
 	else
 		-- calculate time of day
@@ -262,7 +280,7 @@ function state:draw()
 
 	-- debug overlay
 	if DEBUG then
-		love.graphics.setFont(FONT_SMALL)
+		love.graphics.setFont(FONT_DEBUG)
 		love.graphics.print("time: " .. tostring(math.floor(day_night*10)/10), 64, 32)
 		love.graphics.print("temperature: " .. tostring(math.floor(current_temperature*10)/10), 64, 64)
 	end
