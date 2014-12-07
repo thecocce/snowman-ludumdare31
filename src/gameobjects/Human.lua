@@ -33,8 +33,11 @@ local Human = Class
     self.heat = 0
     self.light = Light(self.x, self.y)
 
+    self.visibility = 0
 
     self.stress = 0
+    self.hunger = math.random()*0.5 - 1
+    self.bodyHeat = 1
 
     self.particles = math.random()
 
@@ -132,10 +135,15 @@ end
 Facing
 --]]--
 
-function Human:setDesiredFacing(x, y)
+function Human:setDesiredFacing(dx, dy)
   if (x ~= 0) or (y ~= 0) then
-    self.desired_facex, self.desired_facey = x, y
+    self.desired_facex, self.desired_facey = dx, dy
   end
+end
+
+function Human:setDesiredFace(x, y)
+  local dx, dy = Vector.normalize(x - self.x, y - self.y)
+  self:setDesiredFacing(dx, dy)
 end
 
 function Human:randomDesiredFacing()
@@ -164,10 +172,8 @@ function Human:turnTowards(x, y, speed)
 
     if turn_dir < -0.5 then
       a = -speed
-    elseif turn_dir > 0.5 then
+    else
       a = speed
-    else 
-      return true
     end
 
     x2 = fx*math.cos(a) - fy*math.sin(a)
@@ -183,12 +189,20 @@ Game loop
 
 function Human:update(dt)
 
+  -- get hungry
+  self.hunger = self.hunger + dt/120
+
   -- update torch
   self.light.x, self.light.y = self.x + self.torch_x, self.y + self.torch_y
   if self.torch and (self.heat > 0) then
     self.light.r = self.heat*96
   else
     self.light.r = 0
+    if isLight() then
+      self.visibility = math.min(1, self.visibility + dt)
+    else
+      self.visibility = math.max(0, self.visibility - dt)
+    end
   end
   
   -- heartbeat
@@ -251,8 +265,13 @@ function Human:update(dt)
     end
   end
 
-  -- calm down man!
-  self.stress = math.max(0, self.stress - 0.1*dt)
+  -- pain and panic!
+  if self.nearestMonster then
+    self.stress = math.min(1, self.stress + dt)
+  else
+    -- calm down man!
+    self.stress = math.max(0, self.stress - 0.1*dt)
+  end
 
   -- turn to face desired direction
   if self.desired_facex and self.desired_facey then
@@ -272,16 +291,22 @@ function Human:update(dt)
   end
 
   -- extinguish if no fuel is left
-  if self.fuel < 0.3 then
+  if self.torch and self.fuel < 0.3 then
     self.torch = false
-    Torch(self.x, self.y, self.x, self.y, self.fuel, self.heat).startz = 32
+    Torch(self.x, self.y, self.x, self.y, self.fuel, 0).startz = 32
   end
 
   -- breath
   self.t = self.t + dt*0.3*(1 + 2*self.stress)
   if self.t > 1 then
     self.t = self.t - 1
-    if math.random() > 0.7 then
+    -- face your demons!
+    if self.nearestMonster then
+      local dx, dy = Vector.normalize(self.nearestMonster.x - self.x,
+        self.nearestMonster.y - self.y)
+      self:setDesiredFacing(dx, dy)
+    -- or face a random direction, that works too
+    elseif math.random() > 0.7 then
       self:randomDesiredFacing()
     end
   end
@@ -332,22 +357,17 @@ function Human:draw(x, y)
     self:drawTorch()
   end
 
-
   -- body
   love.graphics.setColor(178, 122, 122)
     local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
     love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
   if self.picked then
+    -- outline if picked
     useful.pushCanvas(UI_CANVAS)
     love.graphics.setColor(200, 200, 255)
-      love.graphics.setLineWidth(2)
-        love.graphics.line(self.x, self.y, mx, my)
-        love.graphics.setBlendMode("subtractive")
-          love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
-        love.graphics.setBlendMode("alpha")
-        love.graphics.rectangle("line", self.x - w, self.y - h, 2*w, h)
-      love.graphics.setLineWidth(1)
+      love.graphics.line(self.x, self.y, mx, my)
+      love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
      useful.bindWhite()
     useful.popCanvas(UI_CANVAS)
   end
@@ -375,15 +395,17 @@ function Human:draw(x, y)
       if self.torch then
         love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y - 16)
         love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y)
+        love.graphics.print("hunger:" .. tostring(math.floor(self.hunger*10)/10), self.x, self.y + 16)
+        love.graphics.print("bodyHeat:" .. tostring(math.floor(self.bodyHeat*10)/10), self.x, self.y + 32)
       end
     -- light
     if self.nearestLight then
       love.graphics.line(self.x, self.y, self.nearestLight.x, self.nearestLight.y)
     end
     -- monster
-    if self.nearestLight then
+    if self.nearestMonster then
       love.graphics.setColor(255, 0, 0)
-        love.graphics.line(self.x, self.y, self.nearestLight.x, self.nearestLight.y)
+        love.graphics.line(self.x, self.y, self.nearestMonster.x, self.nearestMonster.y)
       useful.bindWhite()
     end
     useful.popCanvas()
@@ -402,6 +424,18 @@ function Human:antiShadow()
   end
 end
 
+function Human:drawHighlight()
+  local breath = math.sin(4*self.t*math.pi)
+  local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
+  useful.pushCanvas(UI_CANVAS)
+    love.graphics.setColor(200, 200, 255)
+      love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", self.x - w, self.y - h, 2*w, h)
+      love.graphics.setLineWidth(1)
+     useful.bindWhite()
+  useful.popCanvas(UI_CANVAS)
+end
+
 --[[------------------------------------------------------------
 Combat
 --]]--
@@ -409,10 +443,11 @@ Combat
 function Human:throw(x, y)
   Torch(self.x, self.y, x, y, self.fuel, self.heat).startz = 32
   self.torch = false
+  self.nearestLight = nil
 end
 
 function Human:canThrow(x, y)
-  return self.torch
+  return self.torch and (self.visibility >= 1)
 end
 
 --[[------------------------------------------------------------
@@ -432,6 +467,10 @@ function Human:eventCollision(other, dt)
       self.heat = other.heat
       self.torch = true
       other.purge = true
+    end
+  elseif other:isType("Light") then
+    if other.r > 0 then
+      self.visibility = math.min(1, self.visibility + 2*dt)
     end
   end
 end

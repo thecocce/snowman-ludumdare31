@@ -116,16 +116,17 @@ function state:draw()
 	bake_light()
 
 	-- mouse
-	love.graphics.setColor(200, 200, 255)
-	useful.pushCanvas(UI_CANVAS)
-		local mx, my = love.mouse.getPosition()
-		love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
-		love.graphics.setBlendMode("subtractive")
-			love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
-		love.graphics.setBlendMode("alpha")
-	useful.popCanvas()
-	useful.bindWhite()
-
+	if not desires_exit then
+		useful.pushCanvas(UI_CANVAS)
+			love.graphics.setColor(200, 200, 255)
+				local mx, my = love.mouse.getPosition()
+				love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+				love.graphics.setBlendMode("subtractive")
+					love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+				love.graphics.setBlendMode("alpha")
+			useful.bindWhite()
+		useful.popCanvas()
+	end
 	
 	love.graphics.setColor(200, 200, 255)
 		local offset = 0--4*math.sin(2*t)

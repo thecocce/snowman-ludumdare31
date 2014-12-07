@@ -31,6 +31,7 @@ local wave = 0
 local leaving = nil
 local exit = nil
 local defeat = nil
+local thrower = nil
 
 current_temperature = 0
 current_windspeed = 1
@@ -71,6 +72,7 @@ function state:enter()
 	leaving = nil
 	defeat = false
 	exit = false
+	thrower = nil
 
 	-- repopulate world
 	-- ... fire
@@ -135,13 +137,8 @@ function state:mousepressed(x, y)
 	if pick_dist2 < MAX_PICK_DIST2 then
 		picked_human = pick
 		picked_human:pick()
-	else
-		local thrower = GameObject.getNearestOfType("Human", x, y, 
-			function(human) return human:canThrow(x, y) 
-		end)
-		if thrower then
-			thrower:throw(x, y)
-		end
+	elseif thrower then
+		thrower:throw(x, y)
 	end
 end
 
@@ -164,6 +161,14 @@ function state:update(dt)
 	if (not leaving) and (not GameObject.getObjectOfType("Human")) then
 		leaving = 0
 		defeat = true
+	else
+	-- anybody want to throw stuff at people ?
+		thrower = GameObject.getNearestOfType("Human", mx, my, 
+			function(human) return human:canThrow(mx, my) 
+		end)
+		if thrower then
+			thrower:setDesiredFace(mx, my)
+		end
 	end
 
 	-- ease out
@@ -260,18 +265,25 @@ function state:draw()
 	-- UI
 	useful.pushCanvas(UI_CANVAS)
 		love.graphics.setColor(200, 200, 255)
+		-- thrower
+		if thrower and not picked_human and not leaving then
+			thrower:drawHighlight()
+		end
 		-- mouse
-		local mx, my = love.mouse.getPosition()
-		love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
-		love.graphics.setBlendMode("subtractive")
-			love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
-		love.graphics.setBlendMode("alpha")
-		if not leaving then
-			-- score
-			if (day_night > 0.2) and (day_night < 0.4) then
-				love.graphics.setFont(FONT_MEDIUM)
-					love.graphics.printf("Day " .. tostring(wave),
-					 WORLD_W*(0.5 - 0.2), WORLD_H*0.05, WORLD_W*0.4, "center")
+		if not exit then
+			local mx, my = love.mouse.getPosition()
+			love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+			love.graphics.setBlendMode("subtractive")
+				love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+			love.graphics.setBlendMode("alpha")
+
+			if not leaving then
+				-- score
+				if (day_night > 0.2) and (day_night < 0.4) then
+					love.graphics.setFont(FONT_MEDIUM)
+						love.graphics.printf("Day " .. tostring(wave),
+						 WORLD_W*(0.5 - 0.2), WORLD_H*0.05, WORLD_W*0.4, "center")
+				end
 			end
 		end
 		useful.bindWhite()

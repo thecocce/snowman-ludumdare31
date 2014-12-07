@@ -91,7 +91,7 @@ function Tree:update(dt)
       self.bonfire.fuel = self.bonfire.fuel + offer*2
     end
 
-    branchSpeed = branchSpeed*(1 + 30*self.bonfire.heat)
+    branchSpeed = branchSpeed*(1 + 10*self.bonfire.heat)
   end
 
 
