@@ -43,6 +43,8 @@ local Tree = Class
         length = 3 + (8 + math.random()*4)*(1 - progress)
       })
     end
+
+    self.branchSpawn = math.random() - 1
   end,
 }
 Tree:include(GameObject)
@@ -75,6 +77,20 @@ Game loop
 function Tree:update(dt)
   if self.bonfire and self.bonfire.purge then
     self.bonfire = nil
+  else
+    self.branchSpawn = self.branchSpawn + dt/90
+    if self.branchSpawn > 1 then
+      self.branchSpawn = self.branchSpawn - 1
+
+
+      local a = math.random()*math.pi*2
+      local d = 12 + math.random()*6
+      local x, y = self.x + math.cos(a)*d, self.y + math.sin(a)*d
+      local t = Torch(self.x, self.y, x, y, 1, 0)
+      t.startz = 0.5*(1 + math.random())*self.h
+      t.alreadyHit[self] = true
+    end
+
   end
 end
 

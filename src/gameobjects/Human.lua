@@ -194,8 +194,12 @@ function Human:update(dt)
   -- heartbeat
   self.heart = self.heart + dt
   if self.heart > 1 then
+    -- find nearest light
     self.nearestLight = GameObject.getNearestToCollideOfType(
       "Light", self.x, self.y, function(l) return (l.r > 0) end)
+    -- find nearest monster
+    self.nearestMonster = GameObject.getNearestOfType(
+      "Monster", self.x, self.y, function(m) return (m.visibility > 0) end)
     self.heart = self.heart - 1
   end
 
@@ -371,11 +375,16 @@ function Human:draw(x, y)
         love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y - 16)
         love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y)
       end
-
+    -- light
     if self.nearestLight then
       love.graphics.line(self.x, self.y, self.nearestLight.x, self.nearestLight.y)
     end
-
+    -- monster
+    if self.nearestLight then
+      love.graphics.setColor(255, 0, 0)
+        love.graphics.line(self.x, self.y, self.nearestLight.x, self.nearestLight.y)
+      useful.bindWhite()
+    end
     useful.popCanvas()
   end
 end

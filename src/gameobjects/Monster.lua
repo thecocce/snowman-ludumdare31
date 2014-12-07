@@ -33,6 +33,7 @@ local Monster = Class
     GameObject.init(self, x, y, 6)
     self.fire_t = math.random()
     self.heart = math.random()
+    self.visibility = 0
   end,
 }
 Monster:include(GameObject)
@@ -76,6 +77,9 @@ Game loop
 --]]--
 
 function Monster:update(dt)
+
+  -- disappear like darkness!
+  self.visibility = math.max(0, self.visibility - dt)
 
   -- heartbeat
   self.heart = self.heart + dt
@@ -194,6 +198,8 @@ function Monster:eventCollision(other, dt)
     other:shoveAwayFrom(self, 100*dt)
   elseif other:isType("Human") then
     other:shoveAwayFrom(self, 300*dt)
+  elseif other:isType("Light") then
+    self.visibility = math.min(1, self.visibility + 2*dt)
   end
 end
 
