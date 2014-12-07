@@ -1,6 +1,7 @@
 COLOUR_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 ALPHA_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 LIGHT_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
+SHADOW_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 
 function light(x, y, z, intensity, r, g, b)
 

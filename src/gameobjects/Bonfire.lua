@@ -21,7 +21,7 @@ local Bonfire = Class
   type = GameObject.newType("Bonfire"),
 
   init = function(self, x, y)
-    GameObject.init(self, x, y)
+    GameObject.init(self, x, y, 12)
     self.fuel = 1
     self.t = math.random()
   end,
@@ -77,6 +77,14 @@ function Bonfire:draw(x, y)
   love.graphics.setColor(255, 100, 55)
   	useful.oval("fill", self.x, self.x, 5, 5*VIEW_OBLIQUE)
   useful.bindWhite()
+end
+
+function Bonfire:antiShadow()
+	useful.pushCanvas(SHADOW_CANVAS)
+	  love.graphics.setBlendMode("subtractive")
+	    useful.oval("fill", self.x, self.y, self.fuel*18, self.fuel*18*VIEW_OBLIQUE)
+	  love.graphics.setBlendMode("alpha")
+	useful.popCanvas()
 end
 
 --[[------------------------------------------------------------

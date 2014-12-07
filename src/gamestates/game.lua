@@ -132,6 +132,8 @@ function state:draw()
 
 	WORLD_CANVAS:clear()
 
+
+
 	local lightness = math.max(0, 4*(1 - day_night)*day_night)
 	local r, g, b = useful.ktemp(useful.lerp(16000, 2000, day_night))
 	useful.pushCanvas(COLOUR_CANVAS)
@@ -149,11 +151,21 @@ function state:draw()
 	useful.popCanvas()
 
 
+	-- the floor (snow)
 	love.graphics.setColor(200, 200, 255)
 		love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 	useful.bindWhite()
 
+	-- shadows
+	GameObject.mapToAll(function(o) if o.antiShadow then o:antiShadow() end end)
+	useful.bindBlack(128)
+		love.graphics.draw(SHADOW_CANVAS)
+	useful.bindWhite()
+	SHADOW_CANVAS:clear()
+
+	-- game objects
 	GameObject.drawAll()
+
 
 	useful.pushCanvas(LIGHT_CANVAS)
 		love.graphics.draw(COLOUR_CANVAS)

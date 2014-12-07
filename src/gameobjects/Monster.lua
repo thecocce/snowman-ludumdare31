@@ -30,8 +30,8 @@ local Monster = Class
   type = GameObject.newType("Monster"),
 
   init = function(self, x, y)
-    GameObject.init(self, x, y, 5)
-    self.t = math.random()
+    GameObject.init(self, x, y, 6)
+    self.fire_t = math.random()
   end,
 }
 Monster:include(GameObject)
@@ -99,6 +99,33 @@ function Monster:update(dt)
     end
   end
 
+  if self.fire then
+    self.fire_t = self.fire_t + 20*dt
+    -- burn, howl in pain!
+    if self.fire_t > 1 then
+
+      if math.random() > 0.5 then
+        local angle = math.random()*math.pi*2
+        local speed = 18 + math.random()*8
+        local dx, dy = math.cos(angle), math.sin(angle)
+        Particle.Smoke(self.x + dx*4, self.y + dy*4, 
+          dx*speed, 
+          dy*speed, 
+          60 + math.random()*20)
+      else
+        local angle = math.random()*math.pi*2
+        local speed = 18 + math.random()*8
+        local dx, dy = math.cos(angle), math.sin(angle)
+        Particle.Fire(self.x + dx*4, self.y + dy*4, 
+          dx*speed, 
+          dy*speed, 
+          60 + math.random()*20)
+      end
+
+      self.fire_t = self.fire_t - 1
+    end
+  end
+
   GameObject.update(self, dt)
 end
 
@@ -109,17 +136,20 @@ function Monster:draw(x, y)
   end
 
   love.graphics.setColor(122, 152, 178)
-    love.graphics.rectangle("fill", self.x - 8, self.y - 32, 16, 32)
- 
-    if DEBUG and self.target then
-      useful.bindBlack()
+    love.graphics.rectangle("fill", self.x - 7, self.y - 32, 14, 32)
+  useful.bindWhite()
+  
+  -- shadow
+  useful.pushCanvas(SHADOW_CANVAS)
+    useful.oval("fill", self.x, self.y, 14, 14*VIEW_OBLIQUE)
+  useful.popCanvas()
+
+  -- debug
+  if DEBUG and self.target then
+    useful.bindBlack()
       love.graphics.line(x, y, self.target.x, self.target.y)
-    end
-
- useful.bindWhite()
-
-
-
+    useful.bindWhite()
+  end
 
 end
 

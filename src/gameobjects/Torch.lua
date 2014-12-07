@@ -94,16 +94,16 @@ function Torch:draw(x, y)
     local s = self.spin
     if s < 0.25 then
       -- left
-      love.graphics.rectangle("fill", self.x - 8, self.y - 1 - self.z, 8, 2)
+      love.graphics.rectangle("fill", self.x - 12, self.y - 1 - self.z, 12, 2)
     elseif s < 0.5 then
       -- up
-      love.graphics.rectangle("fill", self.x - 1, self.y - 8 - self.z, 2, 8)
+      love.graphics.rectangle("fill", self.x - 1, self.y - 12 - self.z, 2, 12)
     elseif s < 0.75 then
       -- right
-      love.graphics.rectangle("fill", self.x, self.y - 1 - self.z, 8, 2)
+      love.graphics.rectangle("fill", self.x, self.y - 1 - self.z, 12, 2)
     elseif s <= 1 then
       -- down
-      love.graphics.rectangle("fill", self.x - 1, self.y - self.z, 2, 8)
+      love.graphics.rectangle("fill", self.x - 1, self.y - self.z, 2, 12)
     end
   love.graphics.setColor(255, 100, 55)
     love.graphics.rectangle("fill", self.x - 1, self.y - 1 - self.z, 2, 2)

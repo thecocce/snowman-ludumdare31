@@ -86,15 +86,22 @@ function Fire:draw(x, y)
     local s = self.spin
     if s < 0.5 then
       -- left
-      love.graphics.rectangle("fill", self.x - 8, self.y - 1, 8, 2)
+      love.graphics.rectangle("fill", self.x - 12, self.y - 1, 12, 2)
     else
       -- right
-      love.graphics.rectangle("fill", self.x, self.y - 1, 8, 2)
+      love.graphics.rectangle("fill", self.x, self.y - 1, 12, 2)
     end
   love.graphics.setColor(255, 100, 55, 255*self.fuel)
     love.graphics.rectangle("fill", self.x - 1, self.y - 1, 2, 2)
   useful.bindWhite()
+end
 
+function Fire:antiShadow()
+  useful.pushCanvas(SHADOW_CANVAS)
+    love.graphics.setBlendMode("subtractive")
+      useful.oval("fill", self.x, self.y, self.fuel*8, self.fuel*8*VIEW_OBLIQUE)
+    love.graphics.setBlendMode("alpha")
+  useful.popCanvas()
 end
 
 --[[------------------------------------------------------------

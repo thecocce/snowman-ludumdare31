@@ -101,11 +101,9 @@ function Smoke:draw(x, y)
 	local r = self.r
 	local shad_r = math.min(r, 32*r/self.z)
 
-	-- useful.pushCanvas(SHADOW_CANVAS)
-	-- 	useful.bindBlack()
-	-- 		useful.oval("fill", x, y, shad_r, shad_r*VIEW_OBLIQUE)
-	-- 	useful.bindWhite()
-	-- useful.popCanvas()
+	useful.pushCanvas(SHADOW_CANVAS)
+		useful.oval("fill", x, y, shad_r, shad_r*VIEW_OBLIQUE)
+	useful.popCanvas()
 
 	love.graphics.setColor(self.a, self.a, self.a)
 		useful.oval("fill", x, y - self.z, r, r)
