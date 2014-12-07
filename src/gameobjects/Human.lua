@@ -55,6 +55,13 @@ function Human:onPurge()
   self.light.purge = true
 end
 
+function Human:kill()
+  if self.torch then
+    Torch(self.x, self.y, self.x, self.y, self.fuel, self.heat).startz = 32
+  end
+  self.purge = true
+end
+
 --[[------------------------------------------------------------
 States
 --]]--
@@ -328,6 +335,7 @@ function Human:draw(x, y)
   useful.bindWhite()
   if self.picked then
     useful.pushCanvas(UI_CANVAS)
+    love.graphics.setColor(200, 200, 255)
       love.graphics.setLineWidth(2)
         love.graphics.line(self.x, self.y, mx, my)
         love.graphics.setBlendMode("subtractive")
@@ -335,6 +343,7 @@ function Human:draw(x, y)
         love.graphics.setBlendMode("alpha")
         love.graphics.rectangle("line", self.x - w, self.y - h, 2*w, h)
       love.graphics.setLineWidth(1)
+     useful.bindWhite()
     useful.popCanvas(UI_CANVAS)
   end
 
@@ -388,7 +397,7 @@ Combat
 --]]--
 
 function Human:throw(x, y)
-  local thrown = Torch(self.x, self.y, x, y, self.fuel, self.heat)
+  Torch(self.x, self.y, x, y, self.fuel, self.heat).startz = 32
   self.torch = false
 end
 

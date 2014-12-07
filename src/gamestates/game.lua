@@ -19,7 +19,7 @@ Defines
 --]]--
 
 local MAX_PICK_DIST2 = 24*24
-local MAX_THROW_DIST2 = 1024*1024--256*256
+local MAX_THROW_DIST2 = WORLD_W*WORLD_W
 
 --[[------------------------------------------------------------
 Internal state
@@ -29,6 +29,7 @@ local picked_human = nil
 local t = 0
 local wave = 0
 local leaving = nil
+local defeat = nil
 
 current_temperature = 0
 current_windspeed = 1
@@ -64,8 +65,10 @@ function state:enter()
 	-- reset
 	picked_human = nil
 	day_night = 0
+	music:play()
 	wave = 1
 	leaving = nil
+	defeat = false
 
 	-- repopulate world
 	-- ... fire
@@ -95,6 +98,8 @@ end
 function state:leave()
 	GameObject.purgeAll()
 	picked_human = nil
+	music:stop()
+	music:setVolume(1)
 	SHADOW_CANVAS:clear()
 end
 
@@ -105,10 +110,17 @@ Callbacks
 function state:keypressed(key, uni)
   if key == "escape" then
     leaving = 0
+  	if picked_human then
+			picked_human:unpick()
+			picked_human = nil
+		end
   end
 end
 
 function state:mousepressed(x, y)
+	if leaving then
+		return
+	end
 
 	local pick, pick_dist2 = GameObject.getNearestOfType("Human", x, y)
 	if pick_dist2 < MAX_PICK_DIST2 then
@@ -125,6 +137,10 @@ function state:mousepressed(x, y)
 end
 
 function state:mousereleased()
+	if leaving then
+		return
+	end
+
 	if picked_human then
 		picked_human:unpick()
 		picked_human = nil
@@ -134,6 +150,12 @@ end
 function state:update(dt)
 
 	local mx, my = love.mouse.getPosition()
+
+	-- any humans left?
+	if (not leaving) and (not GameObject.getObjectOfType("Human")) then
+		leaving = 0
+		defeat = true
+	end
 
 	-- ease out
 	if leaving then
@@ -155,14 +177,22 @@ function state:update(dt)
 			day_night = useful.lerp(day_night, 0, math.min(1, 1.1*leaving))
 		end
 
+		-- all music halts
+		music:setVolume(1 - leaving)
+
 		-- leave the state
 		leaving = leaving + dt*0.5
 		if leaving >= 1 then
-			gamestate.switch(title)
+			gamestate.switch(defeat and gameover or title)
 		end
 	else
 		-- calculate time of day
+		local prev_day_night = day_night
 		day_night = day_night + dt/60
+		if day_night >= 0 and prev_day_night < 0 then
+			music:play()
+		end
+
 		if day_night > 1 then
 			-- night falls
 			day_night = day_night - 2
@@ -210,24 +240,25 @@ function state:draw()
 	bake_light()
 
 	-- UI
-	if not leaving then
-		useful.pushCanvas(UI_CANVAS)
-			-- mouse
-			local mx, my = love.mouse.getPosition()
-			love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
-			love.graphics.setBlendMode("subtractive")
-				love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
-			love.graphics.setBlendMode("alpha")
-
+	useful.pushCanvas(UI_CANVAS)
+		love.graphics.setColor(200, 200, 255)
+		-- mouse
+		local mx, my = love.mouse.getPosition()
+		love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+		love.graphics.setBlendMode("subtractive")
+			love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+		love.graphics.setBlendMode("alpha")
+		if not leaving then
 			-- score
 			if (day_night > 0.2) and (day_night < 0.4) then
 				love.graphics.setFont(FONT_MEDIUM)
 					love.graphics.printf("Day " .. tostring(wave),
 					 WORLD_W*(0.5 - 0.2), WORLD_H*0.05, WORLD_W*0.4, "center")
 			end
+		end
+		useful.bindWhite()
+	useful.popCanvas()
 
-		useful.popCanvas()
-	end
 
 	-- debug overlay
 	if DEBUG then

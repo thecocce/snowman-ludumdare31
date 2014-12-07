@@ -130,6 +130,10 @@ UI_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 
 shake = 0
 
+wind_base_base = 0.15
+sound_wind = nil
+music = nil
+
 -------------------------------------------------------------------------------
 -- GAME STATES
 -------------------------------------------------------------------------------
@@ -180,15 +184,16 @@ love.load = function()
 	audio:load_sound("eat", 0.6, 3)
 	audio:load_sound("police_attack", 1, 6)
 	audio:load_sounds("derp", 4, 0.5, 2)
-	
-	music_menu = love.audio.newSource("assets/audio/music_menu.ogg")
-	music_game = love.audio.newSource("assets/audio/music_game.ogg")
-	music_menu:setVolume(0.25)
-	music_game:setVolume(0.25)
-	music_menu:setLooping(true)
-	music_game:setLooping(true)
-	music_menu:play()
 --]]
+
+	sound_wind = love.audio.newSource("assets/audio/wind.ogg", "stream")
+	sound_wind:setVolume(wind_base_base)
+	sound_wind:setLooping(true)
+	sound_wind:play()
+
+	music = love.audio.newSource("assets/audio/dawn.ogg", "stream")
+	music:setVolume(1)
+	music:setLooping(false)
 
 	love.mouse.setVisible(false)
 

@@ -15,6 +15,9 @@ Lesser General Public License for more details.
 local state = gamestate.new()
 
 local t = nil
+local entering = nil
+local desires_leave = false
+local finished_in = false
 
 --[[------------------------------------------------------------
 Gamestate navigation
@@ -23,12 +26,14 @@ Gamestate navigation
 function state:init()
 end
 
-function state:enter()	
-	t = 0
+function state:enter()
+	entering = 0
+	desires_leave = false
+	finished_in = false
 end
 
 function state:leave()
-	WORLD_CANVAS:clear()
+	SHADOW_CANVAS:clear()
 end
 
 --[[------------------------------------------------------------
@@ -37,27 +42,62 @@ Callbacks
 
 function state:keypressed(key, uni)
   if key=="escape" then
-    gamestate.switch(title)
+  	desires_leave = true
   end
 end
 
 function state:mousepressed(x, y, button)
-  gamestate.switch(title)
+  desires_leave = true
 end
 
 function state:update(dt)
-	t = t + dt
+
+	if not finished_in then
+		entering = math.min(1, entering + 0.5*dt)
+		if entering >= 1 then
+			finished_in = true
+		end
+	elseif desires_leave then
+		entering = entering - dt
+		if entering <= 0 then
+			gamestate.switch(title)
+		end
+	end
 end
 
 function state:draw()
+	WORLD_CANVAS:clear()
 
-	local offset = 8*math.sin(2*t)
+	-- mouse
+	love.graphics.setColor(200, 200, 255)
+	useful.pushCanvas(UI_CANVAS)
+		local mx, my = love.mouse.getPosition()
+		love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+		love.graphics.setBlendMode("subtractive")
+			love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+		love.graphics.setBlendMode("alpha")
+	useful.popCanvas()
+	useful.bindWhite()
 
-	love.graphics.setFont(FONT_BIG)
-	love.graphics.printf("GAME OVER!", 
-		(VIEW_W*0.5 - VIEW_W*0.2)/VIEW_SCALE, (VIEW_H*0.4 + offset)/VIEW_SCALE, VIEW_W*0.4/VIEW_SCALE, "center")
+	
+	love.graphics.setColor(200, 200, 255)
 
-	love.graphics.setFont(FONT_SMALL)
+		love.graphics.setFont(FONT_MEDIUM)
+		local y
+
+		-- title
+		y = useful.lerp(-0.3*WORLD_H, WORLD_H*0.3, entering)
+		love.graphics.printf("And so was the light of Mankind", 
+			0, y, WORLD_W, "center") 
+
+		-- credits
+		y = useful.lerp(WORLD_H, WORLD_H*0.6, entering)
+		love.graphics.setFont(FONT_BIG)
+		love.graphics.printf("forever extinguished", 
+			0, y, WORLD_W, "center") 
+
+		love.graphics.setFont(FONT_SMALL)
+	useful.bindWhite()
 end
 
 

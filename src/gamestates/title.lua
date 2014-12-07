@@ -72,6 +72,12 @@ function state:update(dt)
 		finished_in = true
 	elseif leaving then 
 		leaving = math.min(1, leaving + dt)
+
+		-- fade out sounds
+		if desires_exit then
+			sound_wind:setVolume((1 - leaving)*wind_base_base)
+		end
+
 		if leaving >= 1 then
 			if desires_exit then
 				love.event.push("quit")
@@ -110,15 +116,15 @@ function state:draw()
 	bake_light()
 
 	-- mouse
-	if not desires_leave then
-		useful.pushCanvas(UI_CANVAS)
-			local mx, my = love.mouse.getPosition()
-			love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
-			love.graphics.setBlendMode("subtractive")
-				love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
-			love.graphics.setBlendMode("alpha")
-		useful.popCanvas()
-	end
+	love.graphics.setColor(200, 200, 255)
+	useful.pushCanvas(UI_CANVAS)
+		local mx, my = love.mouse.getPosition()
+		love.graphics.polygon("fill", mx - 4, my, mx, my - 4, mx + 4, my, mx, my + 4)
+		love.graphics.setBlendMode("subtractive")
+			love.graphics.polygon("fill", mx - 2, my, mx, my - 2, mx + 2, my, mx, my + 2)
+		love.graphics.setBlendMode("alpha")
+	useful.popCanvas()
+	useful.bindWhite()
 
 	
 	love.graphics.setColor(200, 200, 255)
