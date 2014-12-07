@@ -20,7 +20,7 @@ local Torch = Class
 {
   type = GameObject.newType("Torch"),
 
-  init = function(self, x, y, tx, ty)
+  init = function(self, x, y, tx, ty, starting_fuel, starting_heat)
     GameObject.init(self, x, y, 4)
     self.start_x, self.start_y = x, y
     self.target_x, self.target_y = tx, ty
@@ -31,6 +31,8 @@ local Torch = Class
     self.prev_x, self.prev_y = x, y
     self.spin = math.random()
     self.particles = math.random()
+    self.fuel = starting_fuel
+    self.heat = starting_heat
   end,
 }
 Torch:include(GameObject)
@@ -56,7 +58,7 @@ function Torch:update(dt)
   -- die
   if life <= 0 then
     self.purge = true
-    Fire(self.x, self.y, 1)
+    TorchFallen(self.x, self.y, self.fuel, self.heat)
   end
 
   -- spin
@@ -124,7 +126,7 @@ function Torch:eventCollision(other, dt)
       self.purge = true
 
       local dx, dy = self.prev_x - self.x, self.prev_y - self.y
-      Torch(self.x, self.y, self.x + 4*dx, self.y + 4*dy)
+      Torch(self.x, self.y, self.x + 4*dx, self.y + 4*dy, self.fuel, 0)
     end
   end
 end

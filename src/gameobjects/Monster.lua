@@ -32,6 +32,7 @@ local Monster = Class
   init = function(self, x, y)
     GameObject.init(self, x, y, 6)
     self.fire_t = math.random()
+    self.heart = math.random()
   end,
 }
 Monster:include(GameObject)
@@ -81,7 +82,9 @@ function Monster:update(dt)
     end
   else
 
-    if not self.target then
+    self.heart = self.heart + dt
+
+    if not self.target or self.heart > 1 then
       self.target = GameObject.getNearestOfType("Human", self.x, self.y)
     else
       local t = self.target
@@ -96,6 +99,10 @@ function Monster:update(dt)
         self.dx, self.dy = dx*SPEED, dy*SPEED
       end
 
+    end
+
+    if self.heart > 1 then
+      self.heart = self.heart - 1
     end
   end
 

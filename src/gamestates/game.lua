@@ -25,7 +25,8 @@ local MAX_THROW_DIST2 = 1024*1024--256*256
 Internal state
 --]]--
 
-local picked_human = nil
+picked_human = nil
+the_bonfire = nil
 local t = 0
 local wave = 1
 
@@ -52,13 +53,8 @@ function state:enter()
 	day_night = 0.3
 	wave = 1
 
-
-
-	Monster(0, 0)
-
-
 	-- repopulate world
-	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
+	the_bonfire = Bonfire(WORLD_W*0.5, WORLD_H*0.5)
 	for i = 1, 10 do
 		local angle = math.random()*math.pi*2
 		local distance = 64*(1 + math.random())
@@ -69,6 +65,8 @@ end
 
 function state:leave()
 	GameObject.purgeAll()
+	the_bonfire = nil
+	picked_human = nil
 end
 
 --[[------------------------------------------------------------
@@ -106,7 +104,11 @@ function state:update(dt)
 
 	-- drag humans around
 	if picked_human then
+		local dx, dy, dist = Vector.normalize(mx - picked_human.x, my - picked_human.y)
 		picked_human.x, picked_human.y = mx, my
+		if dist > 0.5 then
+			picked_human:turnTowards(dx, dy, 5*dt)
+		end
 	end
 
 	-- calculate time of day
@@ -132,8 +134,7 @@ function state:draw()
 
 	WORLD_CANVAS:clear()
 
-
-
+	-- calculate lightness based on time of day
 	local lightness = math.max(0, 4*(1 - day_night)*day_night)
 	local r, g, b = useful.ktemp(useful.lerp(16000, 2000, day_night))
 	useful.pushCanvas(COLOUR_CANVAS)
@@ -151,7 +152,7 @@ function state:draw()
 	useful.popCanvas()
 
 
-	-- the floor (snow)
+	-- snow
 	love.graphics.setColor(200, 200, 255)
 		love.graphics.rectangle("fill", 0, 0, WORLD_W, WORLD_H)
 	useful.bindWhite()
@@ -166,14 +167,13 @@ function state:draw()
 	-- game objects
 	GameObject.drawAll()
 
-
+	-- light overlays
 	useful.pushCanvas(LIGHT_CANVAS)
 		love.graphics.draw(COLOUR_CANVAS)
 		love.graphics.setBlendMode("multiplicative")
 			love.graphics.draw(ALPHA_CANVAS)
 		love.graphics.setBlendMode("alpha")
 	useful.popCanvas(LIGHT_CANVAS)
-
 	love.graphics.setBlendMode("multiplicative")
 		love.graphics.draw(LIGHT_CANVAS)
 	love.graphics.setBlendMode("alpha")

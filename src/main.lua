@@ -76,7 +76,7 @@ require("light")
 Human = require("gameobjects/Human")
 Monster = require("gameobjects/Monster")
 Torch = require("gameobjects/Torch")
-Fire = require("gameobjects/Fire")
+TorchFallen = require("gameobjects/TorchFallen")
 Bonfire = require("gameobjects/Bonfire")
 Particle = require("gameobjects/Particle")
 

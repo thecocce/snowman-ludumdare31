@@ -26,7 +26,7 @@ local Fire = Class
 
   FRICTION = 6,
 
-  init = function(self, x, y, dx, dy, dz, size)
+  init = function(self, x, y, dx, dy, dz, sizeMult)
     GameObject.init(self, x, y, 0)
     self.dx, self.dy, self.dz = dx, dy, dz or 0
     self.z = 0
@@ -34,8 +34,9 @@ local Fire = Class
     self.red = 200 + math.random()*55
     self.green = 200 + math.random()*25
     self.blue = 10 + math.random()*5
-    self.dieSpeed = 1 + math.random()
-    size = (size or 1)*8
+    self.dieSpeed = 1.3 + 1.2*math.random()
+    self.sizeMult = (sizeMult or 1)
+    size = self.sizeMult*8
     self.size = size*(1 + 0.5*math.random())
   end,
 }
@@ -57,8 +58,8 @@ function Fire:draw(x, y)
 	love.graphics.setColor(self.red, self.green, self.blue)
 		useful.oval("fill", x, y - self.z, self.r, self.r)
 	useful.bindWhite()
-	light(x, y, self.z, 1 - self.t)
-	light(x, y - self.z, 0, 1 - self.t)
+	light(x, y, self.z, (1 - self.t)*self.sizeMult)
+	light(x, y - self.z, 0, (1 - self.t)*self.sizeMult)
 end
 
 Particle.Fire = Fire
@@ -79,9 +80,9 @@ local Smoke = Class
     self.z = 0
     self.t = 0
     self.a = 50 + math.random()*55
-    size = (size or 1)*12
+    size = (size or 1)*10
     self.size = size*(1 + 0.5)*math.random()
-    self.dieSpeed = 0.3 + math.random()*0.6
+    self.dieSpeed = 0.5 + math.random()*0.7
   end,
 }
 Smoke:include(GameObject)
