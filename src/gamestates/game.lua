@@ -226,6 +226,12 @@ function state:update(dt)
 					math.cos(angle)*WORLD_W*(1 + math.random()*3), 
 					math.sin(angle)*WORLD_H*(1 + math.random()*3))
 			end
+			for i = 1, 2 + math.random(2) do
+				local angle = math.pi*2*math.random()
+				Rabbit(
+					WORLD_W*0.5 + math.cos(angle)*WORLD_W*0.1, 
+					WORLD_H*0.5 + math.sin(angle)*WORLD_H*0.1)
+			end
 			wave = wave + 1
 		end
 	end

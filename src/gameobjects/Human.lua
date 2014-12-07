@@ -66,25 +66,11 @@ function Human:kill()
 end
 
 --[[------------------------------------------------------------
-States
+Life and death
 --]]--
 
-function Human:setState(newStateClass, ...)
-  
-  if self.state.class == newStateClass then
-    return
-  end
-  local newState = newState(self, ...)
-  newState.class = newStateClass
-
-  local oldState = self.state
-  if oldState.exitTo then
-    oldState.exitTo(newState)
-  end
-  if newState.enterFrom then
-    newState.enterFrom(oldState)
-  end
-  self.state = newState
+function Human:health()
+  return (1 - math.max(0, self.hunger))*self.bodyHeat
 end
 
 --[[------------------------------------------------------------
@@ -188,14 +174,25 @@ Game loop
 --]]--
 
 function Human:update(dt)
+  -- how healthy are we?
+  local hlth = self:health()
+  if hlth <= 0 then
+    self:kill()
+  end
+  local hlth_speed = SPEED*(0.5 + 0.5*hlth)
 
   -- get hungry
-  self.hunger = self.hunger + dt/120
+  self.hunger = self.hunger + dt/120*(1 + self.stress)
+
+  -- get cold
+  local ambient = (current_temperature-1)*current_windspeed*dt/30
+  self.bodyHeat = math.max(0, self.bodyHeat + ambient)
 
   -- update torch
   self.light.x, self.light.y = self.x + self.torch_x, self.y + self.torch_y
   if self.torch and (self.heat > 0) then
     self.light.r = self.heat*96
+    self.bodyHeat = math.min(1, self.bodyHeat + 0.03*dt*self.heat)
   else
     self.light.r = 0
     if isLight() then
@@ -226,7 +223,7 @@ function Human:update(dt)
     local nl = self.nearestLight
     local dx, dy, dist = Vector.normalize(nl.x - self.x, nl.y - self.y)
     if dist > nl.r*0.5 then
-      self.dx, self.dy = dx*SPEED, dy*SPEED
+      self.dx, self.dy = dx*hlth_speed, dy*hlth_speed
       self:setDesiredFacing(dx, dy)
     else
       -- stop
@@ -234,14 +231,18 @@ function Human:update(dt)
     end
   end
 
-  -- relit torch at bonfire
+  -- relight torch at bonfire
   local bonfire, dist2 = GameObject.getNearestOfType("Bonfire", self.x, self.y)
-  if bonfire and self:isNear(bonfire) then
-    self.heat = math.max(0.3, math.min(1, self.heat + dt))
-    self.bonfire = bonfire
-    self.desired_facex, self.desired_facey = bonfire.x - self.x, bonfire.y - self.y
-  else
-    self.bonfire = false
+  if bonfire then 
+    if self:isNear(bonfire) then
+      self.bodyHeat = math.min(1, self.bodyHeat + 0.4*dt*bonfire.heat)
+      self.heat = math.max(0.3, math.min(1, self.heat + dt*bonfire.heat))
+      self.bonfire = bonfire
+      self.desired_facex, self.desired_facey = bonfire.x - self.x, bonfire.y - self.y
+    else
+      self.bodyHeat = math.min(1, self.bodyHeat + 0.4*dt*bonfire.heat/dist2)
+      self.bonfire = false
+    end
   end
 
   -- move to mouse if picked
@@ -253,11 +254,11 @@ function Human:update(dt)
       self.dx, self.dx = useful.lerp(self.dx, 0, dt), useful.lerp(self.dy, 0, dt)
     else
       -- move
-      local speed = SPEED*dist/32
+      local speed = hlth_speed*dist/32
       self.dx, self.dy = dx*speed, dy*speed
 
       -- moving is stressful!
-      self.stress = math.min(1, self.stress + speed*dt*0.02)
+      self.stress = math.min(1, self.stress + speed*dt*0.02*(1 - hlth))
     end
     -- turn
     if not self.bonfire then
@@ -275,7 +276,7 @@ function Human:update(dt)
 
   -- turn to face desired direction
   if self.desired_facex and self.desired_facey then
-    if self:turnTowards(self.desired_facex, self.desired_facey, 3*dt) then
+    if self:turnTowards(self.desired_facex, self.desired_facey, 3*dt*hlth) then
       self.desired_facex, self.desired_facey = nil, nil
     end
   end
@@ -358,7 +359,8 @@ function Human:draw(x, y)
   end
 
   -- body
-  love.graphics.setColor(178, 122, 122)
+  local bh = (0.2 + 0.8*self.bodyHeat)
+  love.graphics.setColor(178*bh, 122*bh, 122)
     local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
     love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
@@ -462,7 +464,8 @@ function Human:eventCollision(other, dt)
   elseif other:isType("Tree") then
     self:shoveAwayFrom(other, 500*dt)
   elseif other:isType("TorchFallen") then
-    if not self.torch and other.fuel >= 0.3 then
+    if ((self.visibility >= 0) or (other.heat > 0)) 
+    and (not self.torch) and (other.fuel >= 0.3) then
       self.fuel = other.fuel
       self.heat = other.heat
       self.torch = true
@@ -471,6 +474,13 @@ function Human:eventCollision(other, dt)
   elseif other:isType("Light") then
     if other.r > 0 then
       self.visibility = math.min(1, self.visibility + 2*dt)
+    end
+  elseif other:isType("Rabbit") then
+    if not other.isBurrowed then
+      other:kill()
+      if self.hunger >= 0 then
+        self.hunger = math.max(0, self.hunger - 0.5)
+      end
     end
   end
 end
