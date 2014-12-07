@@ -21,7 +21,7 @@ local TorchFallen = Class
   type = GameObject.newType("TorchFallen"),
 
   init = function(self, x, y, starting_fuel, starting_heat)
-    GameObject.init(self, x, y)
+    GameObject.init(self, x, y, 4)
     self.fuel = starting_fuel
     self.heat = starting_heat
     self.t = math.random()

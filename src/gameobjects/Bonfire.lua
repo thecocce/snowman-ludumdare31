@@ -41,6 +41,10 @@ end
 Game loop
 --]]--
 
+function Bonfire:addWood(amount)
+  self.fuel = math.min(1, self.fuel + amount*0.5)
+end
+
 function Bonfire:update(dt)
 	
 
@@ -94,6 +98,13 @@ function Bonfire:draw(x, y)
   love.graphics.setColor(255, 100, 55, 255*self.heat)
   	useful.oval("fill", self.x, self.x, 5, 5*VIEW_OBLIQUE)
   useful.bindWhite()
+
+  if DEBUG then
+    love.graphics.setFont(FONT_TINY)
+    love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y - 32)
+    love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y)
+  end
+
 end
 
 function Bonfire:antiShadow()

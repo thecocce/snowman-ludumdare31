@@ -60,6 +60,9 @@ function GameObject:isAt(x, y)
   return (Vector.dist2(self.x, self.y, x, y) < self.r*self.r)
 end
 
+function GameObject:isNearPoint(x, y)
+  return (Vector.dist2(self.x, self.y, x, y) < 4*self.r*self.r)
+end
 
 function GameObject:isNear(obj)
   local r = self.r + (obj.r or 0)
@@ -154,6 +157,9 @@ love.load = function()
   --fudge.set({ monkey = true })
   --foregroundb = fudge.new("assets/foreground", { npot = false })
 
+	FONT_TINY = love.graphics.newFont("assets/ttf/Romulus_by_pix3m.ttf", 12)
+	FONT_TINY:setFilter("nearest", "nearest", 1)
+
 	FONT_SMALL = love.graphics.newFont("assets/ttf/Romulus_by_pix3m.ttf", 32)
 	FONT_SMALL:setFilter("nearest", "nearest", 1)
 	love.graphics.setFont(FONT_SMALL)
@@ -183,7 +189,7 @@ love.load = function()
 	music_menu:play()
 --]]
 
-	love.mouse.setVisible(true)
+	love.mouse.setVisible(false)
 
 	gamestate.registerEvents{ 'quit', 'keypressed', 'keyreleased' }
 	gamestate.switch(title)
@@ -200,6 +206,9 @@ love.draw = function()
 		 	VIEW_OFFX + useful.signedRand(shake), 
 	 		VIEW_OFFY + useful.signedRand(shake))
 		love.graphics.draw(WORLD_CANVAS)
+
+		local mx, my = love.mouse.getPosition()
+		love.graphics.circle("line", mx, my, 4)
 
 		useful.recordGIF("x")
 	love.graphics.pop()

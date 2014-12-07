@@ -16,6 +16,8 @@ Lesser General Public License for more details.
 Initialisation
 --]]--
 
+local SPEED = 128
+
 local Human = Class
 {
   FRICTION = 100,
@@ -79,15 +81,39 @@ end
 function Human:drawTorch()
   local x, y = self.x, self.y
   local len = 12*self.torchFuel
+
+
+
+
   useful.bindBlack()
-    love.graphics.rectangle("fill", 
-      x + self.torch_x - 1, y + self.torch_y*VIEW_OBLIQUE - self.torch_h, 2, len)
-  love.graphics.setColor(255, 100, 55, 255*self.torchHeat)
-    love.graphics.rectangle("fill", 
-      x + self.torch_x - 1, y + self.torch_y*VIEW_OBLIQUE - self.torch_h, 2, 2)
+
+    if self.bonfire then
+      -- draw horizontally
+      love.graphics.rectangle("fill", 
+        x + self.torch_x - len, y + self.torch_y*VIEW_OBLIQUE - self.torch_h*0.5, len, 2)
+
+    else
+      -- draw vertical
+      love.graphics.rectangle("fill", 
+        x + self.torch_x - 1, y + self.torch_y*VIEW_OBLIQUE - self.torch_h, 2, len)
+      love.graphics.setColor(255, 100, 55, 255*self.torchHeat)
+        love.graphics.rectangle("fill", 
+          x + self.torch_x - 1, y + self.torch_y*VIEW_OBLIQUE - self.torch_h, 2, 2)
+    end
   useful.bindWhite()
 end
 
+--[[------------------------------------------------------------
+Control
+--]]--
+
+function Human:pick()
+  self.picked = true
+end
+
+function Human:unpick()
+  self.picked = false
+end
 
 --[[------------------------------------------------------------
 Facing
@@ -144,41 +170,47 @@ Game loop
 
 function Human:update(dt)
 
-  -- drop torches on day break
-  if isMorning() then
-    if self.torch then
-      self.torch = false
-      TorchFallen(self.x, self.y, self.torchFuel, 0)
-    end
+  -- relit torch at bonfire
+  local bonfire, dist2 = GameObject.getNearestOfType("Bonfire", self.x, self.y)
+  if bonfire and self:isNear(bonfire) then
+    self.torchHeat = math.max(0.3, math.min(1, self.torchHeat + dt))
+    self.bonfire = bonfire
+  else
+    self.bonfire = false
   end
 
-  -- turn to face desired direction
-  if self ~= picked_human then
+  -- move to mouse if picked and/or turn to face desired direction
+  if self.picked then
+    local mx, my = love.mouse.getPosition()
+    local dx, dy, dist = Vector.normalize(mx - self.x, my - self.y) 
+    self:turnTowards(dx, dy, 5*dt)
+    if dist < self.r*2 then
+      self.dx, self.dx = useful.lerp(self.dx, 0, dt), useful.lerp(self.dy, 0, dt)
+    else
+      local speed = SPEED*dist/64
+      self.dx, self.dy = dx*speed, dy*speed
+    end
+    self.desired_facex, self.desired_facey = nil, nil
+  else
     if self.desired_facex and self.desired_facey then
       if self:turnTowards(self.desired_facex, self.desired_facey, dt) then
         self.desired_facex, self.desired_facey = 0, 0
       end
     end
-  else
-    self.desired_facex, self.desired_facey = 0, 0
   end
 
   -- exponential decline of torch heat
-  if self:isNear(the_bonfire) then
-    self.torchHeat = math.min(1, self.torchHeat + dt)
-  else
-    self.torchHeat = math.max(0, self.torchHeat - 0.01*self.torchHeat*dt)
-  end
+  self.torchHeat = math.max(0, self.torchHeat - 0.01*self.torchHeat*dt)
 
   -- linear decline of torch fuel
-  if self.torchHeat > 0.2 then
+  if self.torchHeat >= 0.2 then
     self.torchFuel = self.torchFuel - 0.001*self.torchHeat*dt
   else
     self.torchHeat = 0
   end
 
   -- extinguish if no fuel is left
-  if self.torchFuel <= 0.1 then
+  if self.torchFuel < 0.1 then
     self.torch = false
   end
 
@@ -257,11 +289,19 @@ function Human:draw(x, y)
   useful.pushCanvas(SHADOW_CANVAS)
     useful.oval("fill", self.x, self.y, 10 - 0.5*breath, (10 - 0.5*breath)*VIEW_OBLIQUE)
   useful.popCanvas()
+
+
+  -- debug data
+  if DEBUG then
+    love.graphics.setFont(FONT_TINY)
+    love.graphics.print("heat:" .. tostring(math.floor(self.torchHeat*10)/10), self.x, self.y - 32)
+    love.graphics.print("fuel:" .. tostring(math.floor(self.torchFuel*10)/10), self.x, self.y)
+  end
 end
 
 function Human:antiShadow()
 
-  if self.torch then
+  if self.torch and self.torchHeat > 0 then
     local x, y = self.x + self.torch_x, self.y + self.torch_y
     useful.pushCanvas(SHADOW_CANVAS)
       love.graphics.setBlendMode("subtractive")
@@ -294,7 +334,7 @@ function Human:eventCollision(other, dt)
   elseif other:isType("Bonfire") then
     self:shoveAwayFrom(other, 500*dt)
   elseif other:isType("TorchFallen") then
-    if not isMorning() and not self.torch then
+    if not self.torch then
       self.torchFuel = other.fuel
       self.torchHeat = other.heat
       self.torch = true

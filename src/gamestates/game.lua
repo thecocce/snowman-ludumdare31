@@ -25,21 +25,25 @@ local MAX_THROW_DIST2 = 1024*1024--256*256
 Internal state
 --]]--
 
-picked_human = nil
-the_bonfire = nil
+local picked_human = nil
 local t = 0
 local wave = 1
+
+current_temperature = 0
+current_windspeed = 1
 
 local day_night = 0
 function isDaytime()
 	return (day_night > 0)
 end
 function isMorning()
-	return isDaytime() and (day_night < 0.5)
+	return (day_night > 0.3) and (day_night < 0.6)
 end
 function isEvening()
-	return isDaytime() and not isMorning()
+	return (day_night >= 0.6)
 end
+
+
 
 --[[------------------------------------------------------------
 Gamestate navigation
@@ -63,7 +67,7 @@ function state:enter()
 	wave = 1
 
 	-- repopulate world
-	the_bonfire = Bonfire(WORLD_W*0.5, WORLD_H*0.5)
+	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
 	for i = 1, 6 do
 		local angle = math.random()*math.pi*2
 		local distance = 64*(1 + 0.1*math.random())
@@ -81,7 +85,6 @@ end
 
 function state:leave()
 	GameObject.purgeAll()
-	the_bonfire = nil
 	picked_human = nil
 end
 
@@ -100,6 +103,7 @@ function state:mousepressed(x, y)
 	local pick, pick_dist2 = GameObject.getNearestOfType("Human", x, y)
 	if pick_dist2 < MAX_PICK_DIST2 then
 		picked_human = pick
+		picked_human:pick()
 	else
 		local thrower = GameObject.getNearestOfType("Human", x, y, 
 			function(human) return human:canThrow(x, y) 
@@ -111,21 +115,15 @@ function state:mousepressed(x, y)
 end
 
 function state:mousereleased()
-	picked_human = nil
+	if picked_human then
+		picked_human:unpick()
+		picked_human = nil
+	end
 end	
 
 function state:update(dt)
 
 	local mx, my = love.mouse.getPosition()
-
-	-- drag humans around
-	if picked_human then
-		local dx, dy, dist = Vector.normalize(mx - picked_human.x, my - picked_human.y)
-		picked_human.x, picked_human.y = mx, my
-		if dist > 0.5 then
-			picked_human:turnTowards(dx, dy, 5*dt)
-		end
-	end
 
 	-- calculate time of day
 	day_night = day_night + dt/60
@@ -141,6 +139,9 @@ function state:update(dt)
 		end
 		wave = wave + 1
 	end
+
+	-- temperature depends on time of day and wind
+	current_temperature = math.sin(day_night*math.pi)*current_windspeed
 
 	-- update all object
 	GameObject.updateAll(dt, { oblique = VIEW_OBLIQUE })
@@ -195,6 +196,12 @@ function state:draw()
 	love.graphics.setBlendMode("alpha")
 
 
+	-- debug overlay
+	if DEBUG then
+		love.graphics.setFont(FONT_SMALL)
+		love.graphics.print("time:" .. tostring(day_night), 32, 32)
+		love.graphics.print("temperature:" .. tostring(current_temperature), 32, 64)
+	end
 end
 
 

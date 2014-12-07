@@ -137,6 +137,10 @@ function Torch:eventCollision(other, dt)
 
         self.alreadyHit[other] = true
       end
+
+    elseif other:isType("Bonfire") then
+      self.purge = true
+      other:addWood(self.fuel)
     end
   end
 end
