@@ -29,7 +29,6 @@ function state:enter()
 end
 
 function state:leave()
-	GameObject.purgeAll()
 end
 
 --[[------------------------------------------------------------
@@ -57,7 +56,7 @@ function state:draw()
 	WORLD_CANVAS:clear()
 
 	-- it's always morning in the menu
-	update_light(0.3)
+	update_light(0.0)
 
 	-- snow
 	love.graphics.setColor(200, 200, 255)
@@ -70,11 +69,22 @@ function state:draw()
 	-- apply light overlays
 	bake_light()
 
-	-- UI
+	-- mouse
+	useful.pushCanvas(UI_CANVAS)
+		local mx, my = love.mouse.getPosition()
+		love.graphics.circle("fill", mx, my, 6)
+		love.graphics.setBlendMode("subtractive")
+			love.graphics.circle("fill", mx, my, 4)
+		love.graphics.setBlendMode("alpha")
+	useful.popCanvas()
+
+	-- title
 	local offset = 8*math.sin(2*t)
 	love.graphics.setFont(FONT_BIG)
 	love.graphics.printf("Twilight of Humanity", 
 		WORLD_W*(0.5 - 0.3), WORLD_H*0.01 + offset, WORLD_W*0.6, "center") 
+
+	-- credits
 	love.graphics.setFont(FONT_MEDIUM)
 	love.graphics.printf("@wilbefast\n#LDJam #LudumDare31", 
 		WORLD_W*(0.5 - 0.3), WORLD_H*0.7 + offset, WORLD_W*0.6, "center") 

@@ -82,6 +82,9 @@ Torch = require("gameobjects/Torch")
 TorchFallen = require("gameobjects/TorchFallen")
 Bonfire = require("gameobjects/Bonfire")
 Particle = require("gameobjects/Particle")
+Rabbit = require("gameobjects/Rabbit")
+Tree = require("gameobjects/Tree")
+Light = require("gameobjects/Light")
 
 -------------------------------------------------------------------------------
 -- DEFINES
@@ -119,9 +122,7 @@ FONT_SMALL = nil
 FONT_MEDIUM = nil
 FONT_BIG = nil
 
-music_menu = nil
-music_game = nil
-playing_music_menu = nil
+UI_CANVAS = love.graphics.newCanvas(WORLD_W, WORLD_H)
 
 -------------------------------------------------------------------------------
 -- GLOBAL VARIABLES
@@ -196,6 +197,7 @@ love.load = function()
 end
 
 love.draw = function()
+
 	useful.pushCanvas(WORLD_CANVAS)
 		gamestate.draw()
 	useful.popCanvas()
@@ -207,11 +209,8 @@ love.draw = function()
 	 		VIEW_OFFY + useful.signedRand(shake))
 		love.graphics.draw(WORLD_CANVAS)
 
-		local mx, my = love.mouse.getPosition()
-
-		love.graphics.setLineWidth(2)
-			love.graphics.circle("line", mx, my, 4)
-		love.graphics.setLineWidth(1)
+		love.graphics.draw(UI_CANVAS)
+		UI_CANVAS:clear()
 
 		useful.recordGIF("x")
 	love.graphics.pop()

@@ -25,6 +25,7 @@ local Bonfire = Class
     self.fuel = 1
     self.heat = 1
     self.t = math.random()
+    self.light = Light(self.x, self.y)
   end,
 }
 Bonfire:include(GameObject)
@@ -34,6 +35,7 @@ Destruction
 --]]--
 
 function Bonfire:onPurge()
+  self.light.purge = true
 end
 
 
@@ -46,7 +48,6 @@ function Bonfire:addWood(amount)
 end
 
 function Bonfire:update(dt)
-	
 
   -- exponential decline of heat
   self.heat = math.max(0, self.heat - 0.002*self.heat*dt)
@@ -57,6 +58,7 @@ function Bonfire:update(dt)
   else
     self.heat = 0
   end
+  self.light.r = 128*self.heat
 
   -- extinguish if no fuel is left
   if self.fuel <= 0.1 then
@@ -101,8 +103,8 @@ function Bonfire:draw(x, y)
 
   if DEBUG then
     love.graphics.setFont(FONT_TINY)
-    love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y - 32)
-    love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y)
+    love.graphics.print("heat:" .. tostring(math.floor(self.heat*10)/10), self.x, self.y)
+    love.graphics.print("fuel:" .. tostring(math.floor(self.fuel*10)/10), self.x, self.y + 16)
   end
 
 end

@@ -36,11 +36,8 @@ local day_night = 0
 function isDaytime()
 	return (day_night > 0)
 end
-function isMorning()
-	return (day_night > 0.3) and (day_night < 0.6)
-end
-function isEvening()
-	return (day_night >= 0.6)
+function isLight()
+	return (day_night > 0.2) and (day_night < 0.8) 
 end
 
 
@@ -63,22 +60,19 @@ function state:enter()
 
 	-- reset
 	picked_human = nil
-	day_night = 0.3
+	day_night = 0
 	wave = 1
 
 	-- repopulate world
+	GameObject.mapToType("Bonfire", function(o) o.purge = true end)
 	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
 	for i = 1, 6 do
 		local angle = math.random()*math.pi*2
-		local distance = 64*(1 + 0.1*math.random())
-		Human(math.cos(angle)*distance + WORLD_W*0.5, math.sin(angle)*distance + WORLD_H*0.5)
-	end
-
-	local angle = math.random()*math.pi*2
-	local distance = 32*(1 + 0.1*math.random())
-	local x, y = math.cos(angle)*distance + WORLD_W*0.5, math.sin(angle)*distance + WORLD_H*0.5
-	for i = 1, 4 do
-		TorchFallen(x + useful.signedRand(4), y + useful.signedRand(4), 1, 0)
+		local distance = 150*(1 + 0.1*math.random())
+		Human(
+			math.cos(angle)*distance + WORLD_W*0.5, 
+			math.sin(angle)*distance + WORLD_H*0.5, 
+			i < 4)
 	end
 end
 
@@ -172,12 +166,20 @@ function state:draw()
 	-- light overlays
 	bake_light()
 
+	-- mouse
+	useful.pushCanvas(UI_CANVAS)
+		local mx, my = love.mouse.getPosition()
+		love.graphics.circle("fill", mx, my, 6)
+		love.graphics.setBlendMode("subtractive")
+			love.graphics.circle("fill", mx, my, 4)
+		love.graphics.setBlendMode("alpha")
+	useful.popCanvas()
 
 	-- debug overlay
 	if DEBUG then
 		love.graphics.setFont(FONT_SMALL)
-		love.graphics.print("time:" .. tostring(day_night), 32, 32)
-		love.graphics.print("temperature:" .. tostring(current_temperature), 32, 64)
+		love.graphics.print("time: " .. tostring(math.floor(day_night*10)/10), 64, 32)
+		love.graphics.print("temperature: " .. tostring(math.floor(current_temperature*10)/10), 64, 64)
 	end
 end
 

@@ -16,7 +16,7 @@ Lesser General Public License for more details.
 Initialisation
 --]]--
 
-local SPEED = 128
+local SPEED = 64
 
 local Human = Class
 {
@@ -24,13 +24,16 @@ local Human = Class
 
   type = GameObject.newType("Human"),
 
-  init = function(self, x, y)
+  init = function(self, x, y, torch)
     GameObject.init(self, x, y, 5)
     self.t = math.random()
 
-    self.torch = false
-    self.torchFuel = 0
+    self.torch = torch
+    self.torchFuel = (torch and 1) or 0
     self.torchHeat = 0
+    self.torchLight = Light(self.x, self.y)
+
+
     self.stress = 0
 
     self.particles = math.random()
@@ -38,6 +41,8 @@ local Human = Class
     self:randomFacing()
 
     self.torch_h = self:torchHeight()
+
+    self.heart = math.random()
   end,
 }
 Human:include(GameObject)
@@ -47,6 +52,7 @@ Destruction
 --]]--
 
 function Human:onPurge()
+  self.torchLight.purge = true
 end
 
 --[[------------------------------------------------------------
@@ -82,7 +88,6 @@ end
 function Human:drawTorch()
   local x, y = self.x, self.y
   local len = 12*self.torchFuel
-
 
 
 
@@ -171,6 +176,39 @@ Game loop
 
 function Human:update(dt)
 
+  -- update torch
+  self.torchLight.x, self.torchLight.y = self.x + self.torch_x, self.y + self.torch_y
+  if self.torch and (self.torchHeat > 0) then
+    self.torchLight.r = self.torchHeat*96
+  else
+    self.torchLight.r = 0
+  end
+  
+  -- heartbeat
+  self.heart = self.heart + dt
+  if self.heart > 1 then
+    self.nearestLight = GameObject.getNearestToCollideOfType(
+      "Light", self.x, self.y, function(l) return (l.r > 0) end)
+    self.heart = self.heart - 1
+  end
+
+  -- go to the light
+  if not self.picked 
+  and not isLight()
+  and self.nearestLight 
+  and (not self.torch or (self.torchHeat <= 0)) 
+  then
+    local nl = self.nearestLight
+    local dx, dy, dist = Vector.normalize(nl.x - self.x, nl.y - self.y)
+    if dist > nl.r*0.5 then
+      self.dx, self.dy = dx*SPEED, dy*SPEED
+      self:setDesiredFacing(dx, dy)
+    else
+      -- stop
+      self.dx, self.dx = useful.lerp(self.dx, 0, dt), useful.lerp(self.dy, 0, dt)
+    end
+  end
+
   -- relit torch at bonfire
   local bonfire, dist2 = GameObject.getNearestOfType("Bonfire", self.x, self.y)
   if bonfire and self:isNear(bonfire) then
@@ -190,7 +228,7 @@ function Human:update(dt)
       self.dx, self.dx = useful.lerp(self.dx, 0, dt), useful.lerp(self.dy, 0, dt)
     else
       -- move
-      local speed = SPEED*dist/64
+      local speed = SPEED*dist/32
       self.dx, self.dy = dx*speed, dy*speed
 
       -- moving is stressful!
@@ -274,6 +312,7 @@ end
 
 
 function Human:draw(x, y)
+  local mx, my = love.mouse.getPosition()
   local breath = math.sin(4*self.t*math.pi)
 
   -- torch behind ?
@@ -288,9 +327,15 @@ function Human:draw(x, y)
     love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
   if self.picked then
-    love.graphics.setLineWidth(2)
-      love.graphics.rectangle("line", self.x - w, self.y - h, 2*w, h)
-    love.graphics.setLineWidth(1)
+    useful.pushCanvas(UI_CANVAS)
+      love.graphics.setLineWidth(2)
+        love.graphics.line(self.x, self.y, mx, my)
+        love.graphics.setBlendMode("subtractive")
+          love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
+        love.graphics.setBlendMode("alpha")
+        love.graphics.rectangle("line", self.x - w, self.y - h, 2*w, h)
+      love.graphics.setLineWidth(1)
+    useful.popCanvas(UI_CANVAS)
   end
 
   -- torch in front
@@ -312,8 +357,17 @@ function Human:draw(x, y)
   -- debug data
   if DEBUG then
     love.graphics.setFont(FONT_TINY)
-    love.graphics.print("heat:" .. tostring(math.floor(self.torchHeat*10)/10), self.x, self.y - 32)
-    love.graphics.print("fuel:" .. tostring(math.floor(self.torchFuel*10)/10), self.x, self.y)
+    useful.pushCanvas(UI_CANVAS)
+      if self.torch then
+        love.graphics.print("heat:" .. tostring(math.floor(self.torchHeat*10)/10), self.x, self.y - 16)
+        love.graphics.print("fuel:" .. tostring(math.floor(self.torchFuel*10)/10), self.x, self.y)
+      end
+
+    if self.nearestLight then
+      love.graphics.line(self.x, self.y, self.nearestLight.x, self.nearestLight.y)
+    end
+
+    useful.popCanvas()
   end
 end
 
