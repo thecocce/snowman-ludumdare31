@@ -73,7 +73,7 @@ Game loop
 
 function Monster:update(dt)
 
-  if self.fire or (day_night > 0) then
+  if self.fire or isDaytime() then
     -- run away!
     local dx, dy, dist = Vector.normalize(self.x - WORLD_W*0.5, self.y - WORLD_H*0.5)
     self.dx, self.dy = dx*SPEED_FLEE, dy*SPEED_FLEE

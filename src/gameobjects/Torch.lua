@@ -33,6 +33,7 @@ local Torch = Class
     self.particles = math.random()
     self.fuel = starting_fuel
     self.heat = starting_heat
+    self.alreadyHit = {}
   end,
 }
 Torch:include(GameObject)
@@ -68,29 +69,33 @@ function Torch:update(dt)
   end
 
   -- particles
-  self.particles = self.particles + dt*30
-  if self.particles > 1 then
-    -- smoke!
-    local s = Particle.Smoke(self.x, self.y, 
-      -64*self.dx + useful.signedRand(8), 
-      -64*self.dy + useful.signedRand(8),
-      -4*(life-10 - 2) + useful.signedRand(10), 0.4)
-    s.z = self.z
+  if self.heat > 0 then
+    self.particles = self.particles + dt*30
+    if self.particles > 1 then
+      -- smoke!
+      local s = Particle.Smoke(self.x, self.y, 
+        -64*self.dx + useful.signedRand(8), 
+        -64*self.dy + useful.signedRand(8),
+        -4*(life-10 - 2) + useful.signedRand(10), 0.4)
+      s.z = self.z
 
-    -- and fire!
-    local f = Particle.Fire(self.x, self.y, 
-      -16*self.dx + useful.signedRand(8), 
-      -16*self.dy + useful.signedRand(8),
-      -4*(life-10 - 2) + useful.signedRand(10), 0.4)
-    f.z = self.z
+      -- and fire!
+      local f = Particle.Fire(self.x, self.y, 
+        -16*self.dx + useful.signedRand(8), 
+        -16*self.dy + useful.signedRand(8),
+        -4*(life-10 - 2) + useful.signedRand(10), 0.4)
+      f.z = self.z
 
-    self.particles = self.particles - 1
+      self.particles = self.particles - 1
+    end
   end
 end
 
 function Torch:draw(x, y)
-  light(x, y, self.z, 2)
-  light(x, y - self.z, 0, 1)
+  if self.heat > 0 then
+    light(x, y, self.z, 2)
+    light(x, y - self.z, 0, 1)
+  end
 
   useful.bindBlack()
     local s = self.spin
@@ -120,13 +125,18 @@ Collisions
 
 function Torch:eventCollision(other, dt)
   if self.z < 96 then
-    if other:isType("Monster") and not other:isOnFire() then
-      other:shoveAwayFrom(self, 1000)
-      other:ignite()
-      self.purge = true
+    if other:isType("Monster") then
 
-      local dx, dy = self.prev_x - self.x, self.prev_y - self.y
-      Torch(self.x, self.y, self.x + 4*dx, self.y + 4*dy, self.fuel, 0)
+      if not self.alreadyHit[other] then
+        if self.heat > 0.5 and not other:isOnFire() then
+          other:ignite()
+        end
+        self.purge = true
+        local dx, dy = self.prev_x - self.x, self.prev_y - self.y
+        Torch(self.x, self.y, self.x + 4*dx, self.y + 4*dy, self.fuel, self.heat - 0.5)
+
+        self.alreadyHit[other] = true
+      end
     end
   end
 end

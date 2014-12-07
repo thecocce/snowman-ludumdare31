@@ -44,7 +44,7 @@ Game loop
 
 function TorchFallen:update(dt)
   -- exponential decline of heat
-  self.heat = self.heat - 0.1*self.heat*dt
+  self.heat = math.max(0, self.heat - 0.1*self.heat*dt)
 
   -- linear decline of fuel
   if self.heat > 0.2 then
@@ -119,6 +119,11 @@ end
 Collisions
 --]]--
 
+function TorchFallen:eventCollision(other, dt)
+  if other:isType("TorchFallen") then
+    other:shoveAwayFrom(self, 100*dt)
+  end
+end
 
 --[[------------------------------------------------------------
 Export

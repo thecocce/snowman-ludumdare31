@@ -30,7 +30,16 @@ the_bonfire = nil
 local t = 0
 local wave = 1
 
-day_night = 0
+local day_night = 0
+function isDaytime()
+	return (day_night > 0)
+end
+function isMorning()
+	return isDaytime() and (day_night < 0.5)
+end
+function isEvening()
+	return isDaytime() and not isMorning()
+end
 
 --[[------------------------------------------------------------
 Gamestate navigation
@@ -55,10 +64,17 @@ function state:enter()
 
 	-- repopulate world
 	the_bonfire = Bonfire(WORLD_W*0.5, WORLD_H*0.5)
-	for i = 1, 10 do
+	for i = 1, 6 do
 		local angle = math.random()*math.pi*2
-		local distance = 64*(1 + math.random())
+		local distance = 64*(1 + 0.1*math.random())
 		Human(math.cos(angle)*distance + WORLD_W*0.5, math.sin(angle)*distance + WORLD_H*0.5)
+	end
+
+	local angle = math.random()*math.pi*2
+	local distance = 32*(1 + 0.1*math.random())
+	local x, y = math.cos(angle)*distance + WORLD_W*0.5, math.sin(angle)*distance + WORLD_H*0.5
+	for i = 1, 4 do
+		TorchFallen(x + useful.signedRand(4), y + useful.signedRand(4), 1, 0)
 	end
 end
 

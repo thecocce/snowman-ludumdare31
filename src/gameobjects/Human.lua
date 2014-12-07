@@ -26,9 +26,9 @@ local Human = Class
     GameObject.init(self, x, y, 5)
     self.t = math.random()
 
-    self.torch = true
-    self.torchFuel = 1
-    self.torchHeat = 1
+    self.torch = false
+    self.torchFuel = 0
+    self.torchHeat = 0
 
     self.particles = math.random()
 
@@ -93,6 +93,17 @@ end
 Facing
 --]]--
 
+function Human:setDesiredFacing(x, y)
+  if (x ~= 0) or (y ~= 0) then
+    self.desired_facex, self.desired_facey = x, y
+  end
+end
+
+function Human:randomDesiredFacing()
+  local facing = math.random()*math.pi*2
+  self:setDesiredFacing(math.cos(facing), math.sin(facing))
+end
+
 function Human:setFacing(x, y)
   if (x ~= 0) or (y ~= 0) then
     self.facex, self.facey = x, y
@@ -117,15 +128,13 @@ function Human:turnTowards(x, y, speed)
     elseif turn_dir > 0.5 then
       a = speed
     else 
-      a = 0
+      return true
     end
 
-    if a ~= 0 then
-      x2 = fx*math.cos(a) - fy*math.sin(a)
-      y2 = fx*math.sin(a) + fy*math.cos(a)
-
-      self:setFacing(x2, y2)
-    end
+    x2 = fx*math.cos(a) - fy*math.sin(a)
+    y2 = fx*math.sin(a) + fy*math.cos(a)
+    self:setFacing(x2, y2)
+    return false
   end
 end
 
@@ -135,11 +144,30 @@ Game loop
 
 function Human:update(dt)
 
+  -- drop torches on day break
+  if isMorning() then
+    if self.torch then
+      self.torch = false
+      TorchFallen(self.x, self.y, self.torchFuel, 0)
+    end
+  end
+
+  -- turn to face desired direction
+  if self ~= picked_human then
+    if self.desired_facex and self.desired_facey then
+      if self:turnTowards(self.desired_facex, self.desired_facey, dt) then
+        self.desired_facex, self.desired_facey = 0, 0
+      end
+    end
+  else
+    self.desired_facex, self.desired_facey = 0, 0
+  end
+
   -- exponential decline of torch heat
   if self:isNear(the_bonfire) then
     self.torchHeat = math.min(1, self.torchHeat + dt)
   else
-    self.torchHeat = self.torchHeat - 0.01*self.torchHeat*dt
+    self.torchHeat = math.max(0, self.torchHeat - 0.01*self.torchHeat*dt)
   end
 
   -- linear decline of torch fuel
@@ -149,12 +177,17 @@ function Human:update(dt)
     self.torchHeat = 0
   end
 
+  -- extinguish if no fuel is left
+  if self.torchFuel <= 0.1 then
+    self.torch = false
+  end
+
   -- breath
   self.t = self.t + dt*0.3
   if self.t > 1 then
     self.t = self.t - 1
-    if (math.random() > 0.7) and (self ~= picked_human) then
-      self:randomFacing()
+    if math.random() > 0.7 then
+      self:randomDesiredFacing()
     end
   end
 
@@ -261,7 +294,7 @@ function Human:eventCollision(other, dt)
   elseif other:isType("Bonfire") then
     self:shoveAwayFrom(other, 500*dt)
   elseif other:isType("TorchFallen") then
-    if not self.torch then
+    if not isMorning() and not self.torch then
       self.torchFuel = other.fuel
       self.torchHeat = other.heat
       self.torch = true
