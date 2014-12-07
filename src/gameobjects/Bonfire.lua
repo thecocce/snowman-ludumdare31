@@ -20,9 +20,10 @@ local Bonfire = Class
 {
   type = GameObject.newType("Bonfire"),
 
-  init = function(self, x, y, starting_fuel)
+  init = function(self, x, y)
     GameObject.init(self, x, y)
-    self.fuel = starting_fuel
+    self.fuel = 1
+    self.t = math.random()
   end,
 }
 Bonfire:include(GameObject)
@@ -40,11 +41,42 @@ Game loop
 --]]--
 
 function Bonfire:update(dt)
+	self.t = self.t + dt*30
+
+	if self.t > 1 then
+
+		if math.random()*1.5 > self.fuel then
+			local angle = math.random()*math.pi*2
+			local speed = 18 + math.random()*8
+			local dx, dy = math.cos(angle), math.sin(angle)
+			Particle.Smoke(self.x + dx*4, self.y + dy*4, 
+				dx*speed, 
+				dy*speed, 
+				60 + math.random()*20)
+		else
+			local angle = math.random()*math.pi*2
+			local speed = 18 + math.random()*8
+			local dx, dy = math.cos(angle), math.sin(angle)
+			Particle.Fire(self.x + dx*4, self.y + dy*4, 
+				dx*speed, 
+				dy*speed, 
+				60 + math.random()*20)
+		end
+
+		self.t = self.t - 1
+	end
+
+
+
 end
 
 function Bonfire:draw(x, y)
   light(x, y, 0, 8)
-  love.graphics.rectangle("fill", self.x - 8, self.y - 8, 16, 16)
+  love.graphics.setColor(32, 32, 32)
+  	useful.oval("fill", self.x, self.x, 12, 12*VIEW_OBLIQUE)
+  love.graphics.setColor(255, 100, 55)
+  	useful.oval("fill", self.x, self.x, 5, 5*VIEW_OBLIQUE)
+  useful.bindWhite()
 end
 
 --[[------------------------------------------------------------

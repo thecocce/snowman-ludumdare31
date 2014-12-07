@@ -75,11 +75,11 @@ end
 
 function Human:draw(x, y)
   if self.torchFuel > 0 then
-    light(x, y, 64, 2)
+    light(x, y, 64, 3)
   end
 
   love.graphics.setColor(122, 178, 128)
-    love.graphics.rectangle("fill", self.x - 8, self.y - 32, 16, 32)
+    love.graphics.rectangle("fill", self.x - 5, self.y - 24, 10, 24)
   useful.bindWhite()
 end
 

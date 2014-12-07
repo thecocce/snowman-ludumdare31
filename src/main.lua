@@ -78,6 +78,7 @@ Monster = require("gameobjects/Monster")
 Torch = require("gameobjects/Torch")
 Fire = require("gameobjects/Fire")
 Bonfire = require("gameobjects/Bonfire")
+Particle = require("gameobjects/Particle")
 
 -------------------------------------------------------------------------------
 -- DEFINES

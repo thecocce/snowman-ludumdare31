@@ -23,6 +23,8 @@ local Fire = Class
   init = function(self, x, y, starting_fuel)
     GameObject.init(self, x, y)
     self.fuel = starting_fuel
+    self.t = math.random()
+    self.spin = math.random()
   end,
 }
 Fire:include(GameObject)
@@ -47,11 +49,52 @@ function Fire:update(dt)
   if self.fuel <= 0.1 then
     self.purge = true
   end
+
+  -- particles
+  self.t = self.t + dt*15
+  if self.t > 1 then
+
+    if math.random()*1.5 > self.fuel then
+      local angle = math.random()*math.pi*2
+      local speed = 18 + math.random()*8
+      local dx, dy = math.cos(angle)*self.fuel, math.sin(angle)*self.fuel
+      Particle.Smoke(self.x + dx, self.y + dy, 
+        dx*speed, 
+        dy*speed, 
+        30 + math.random()*10,
+        0.5*self.fuel)
+    else
+      local angle = math.random()*math.pi*2
+      local speed = 18 + math.random()*8
+      local dx, dy = math.cos(angle)*self.fuel, math.sin(angle)*self.fuel
+      Particle.Fire(self.x + dx, self.y + dy, 
+        dx*speed, 
+        dy*speed, 
+        30 + math.random()*10,
+        0.5)
+    end
+
+    self.t = self.t - 1
+  end
 end
 
 function Fire:draw(x, y)
   light(x, y, 0, self.fuel)
-  love.graphics.rectangle("fill", self.x - 4, self.y - 4, 8, 8)
+
+
+  useful.bindBlack()
+    local s = self.spin
+    if s < 0.5 then
+      -- left
+      love.graphics.rectangle("fill", self.x - 8, self.y - 1, 8, 2)
+    else
+      -- right
+      love.graphics.rectangle("fill", self.x, self.y - 1, 8, 2)
+    end
+  love.graphics.setColor(255, 100, 55, 255*self.fuel)
+    love.graphics.rectangle("fill", self.x - 1, self.y - 1, 2, 2)
+  useful.bindWhite()
+
 end
 
 --[[------------------------------------------------------------

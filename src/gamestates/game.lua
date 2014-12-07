@@ -18,7 +18,7 @@ local state = gamestate.new()
 Defines
 --]]--
 
-local MAX_PICK_DIST2 = 16*16
+local MAX_PICK_DIST2 = 24*24
 local MAX_THROW_DIST2 = 1024*1024--256*256
 
 --[[------------------------------------------------------------
@@ -27,8 +27,9 @@ Internal state
 
 local picked_human = nil
 local t = 0
+local wave = 1
 
-local day_night = 0
+day_night = 0
 
 --[[------------------------------------------------------------
 Gamestate navigation
@@ -48,8 +49,13 @@ function state:enter()
 
 	-- reset
 	picked_human = nil
-	t = 0
-	day_night = 0
+	day_night = 0.3
+	wave = 1
+
+
+
+	Monster(0, 0)
+
 
 	-- repopulate world
 	Bonfire(WORLD_W*0.5, WORLD_H*0.5)
@@ -104,9 +110,18 @@ function state:update(dt)
 	end
 
 	-- calculate time of day
-	day_night = day_night + dt/4
+	day_night = day_night + dt/60
 	if day_night > 1 then
+		-- night falls
 		day_night = day_night - 2
+		-- spawn monsters
+		for i = 1, wave do
+			local angle = math.pi*2*math.random()
+			Monster(
+				math.cos(angle)*WORLD_W*(1 + math.random()*3), 
+				math.sin(angle)*WORLD_H*(1 + math.random()*3))
+		end
+		wave = wave + 1
 	end
 
 	-- update all object
@@ -150,8 +165,6 @@ function state:draw()
 	love.graphics.setBlendMode("multiplicative")
 		love.graphics.draw(LIGHT_CANVAS)
 	love.graphics.setBlendMode("alpha")
-
-	--love.graphics.print(tostring(math.floor(day_night*10)/10), 0, 0)
 
 
 end
