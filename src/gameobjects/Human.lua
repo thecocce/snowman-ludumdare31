@@ -62,7 +62,7 @@ function Human:kill()
   if self.torch then
     Torch(self.x, self.y, self.x, self.y, self.fuel, self.heat).startz = 32
   end
-  self.purge = true
+  self.dying = 0
 end
 
 --[[------------------------------------------------------------
@@ -84,8 +84,6 @@ end
 function Human:drawTorch()
   local x, y = self.x, self.y
   local len = 12*self.fuel
-
-
 
   useful.bindBlack()
 
@@ -174,6 +172,16 @@ Game loop
 --]]--
 
 function Human:update(dt)
+  -- die
+  if self.dying then
+    self.dying = self.dying + dt
+    if self.dying > 1 then
+      self.purge = true
+    end
+    return
+  end
+
+
   -- how healthy are we?
   local hlth = self:health()
   if hlth <= 0 then
@@ -350,6 +358,22 @@ end
 
 
 function Human:draw(x, y)
+  if self.dying then
+    -- die animation
+    local bh = (0.2 + 0.8*self.bodyHeat)
+    love.graphics.setColor(178*bh, 122*bh, 122, (1 - self.dying)*255)
+      local w = (1 + self.dying)*5*(1 - 0.3*math.abs(self.facex))
+      local h = (12 + 12*self:health())*(1 - self.dying)
+      love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
+    useful.bindWhite()
+    -- shadow
+    useful.pushCanvas(SHADOW_CANVAS)
+      useful.oval("fill", self.x, self.y, 10*(1 + self.dying), 10*VIEW_OBLIQUE*(1 - self.dying))
+    useful.popCanvas()
+    return
+  end
+
+
   local mx, my = love.mouse.getPosition()
   local breath = math.sin(4*self.t*math.pi)
 
@@ -451,7 +475,7 @@ function Human:throw(x, y)
 end
 
 function Human:canThrow(x, y)
-  return self.torch and (self.visibility >= 1)
+  return not self.dying and self.torch and (self.visibility >= 1)
 end
 
 --[[------------------------------------------------------------
@@ -478,7 +502,7 @@ function Human:eventCollision(other, dt)
       self.visibility = math.min(1, self.visibility + 2*dt)
     end
   elseif other:isType("Rabbit") then
-    if not other.isBurrowed then
+    if not other.isBurrowed and not other.dying then
       other:kill()
       GameObject.mapToType("Human", 
         function(h) h.hunger = h.hunger - 0.5 end)

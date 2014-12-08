@@ -133,7 +133,8 @@ function state:mousepressed(x, y)
 		return
 	end
 
-	local pick, pick_dist2 = GameObject.getNearestOfType("Human", x, y)
+	local pick, pick_dist2 = GameObject.getNearestOfType("Human", x, y,
+		function(h) return not h.dying end)
 	if pick_dist2 < MAX_PICK_DIST2 then
 		picked_human = pick
 		picked_human:pick()

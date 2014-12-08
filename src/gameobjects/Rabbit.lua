@@ -46,7 +46,7 @@ function Rabbit:onPurge()
 end
 
 function Rabbit:kill()
-  self.purge = true
+  self.dying = 0
 end
 
 --[[------------------------------------------------------------
@@ -63,6 +63,15 @@ Game loop
 --]]--
 
 function Rabbit:update(dt)
+
+  -- die
+  if self.dying then
+    self.dying = self.dying + dt
+    if self.dying > 1 then
+      self.purge = true
+    end
+    return
+  end
 
   GameObject.update(self, dt)
 
@@ -119,6 +128,19 @@ function Rabbit:draw(x, y)
     useful.popCanvas()
   end
 
+  if self.dying then
+    -- die animation
+    local w, h = 4*(1 + self.dying), 6*(1 - self.dying)
+    love.graphics.setColor(178, 122, 173, 255*(1 - self.dying))  
+      love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
+    useful.bindWhite()
+    -- shadow
+    useful.pushCanvas(SHADOW_CANVAS)
+      useful.oval("fill", self.x, self.y, 6*(1 + self.dying), 6*VIEW_OBLIQUE*(1 - self.dying))
+    useful.popCanvas()
+    return
+  end
+
   -- invisible
   if self.burrowed then
     return
@@ -137,8 +159,6 @@ function Rabbit:draw(x, y)
   useful.pushCanvas(SHADOW_CANVAS)
     useful.oval("fill", self.x, self.y, 6, 6*VIEW_OBLIQUE)
   useful.popCanvas()
-
-
 
 end
 

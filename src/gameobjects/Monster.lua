@@ -94,20 +94,24 @@ function Monster:update(dt)
   else
 
     if not self.target or self.heart > 1 then
-      self.target = GameObject.getNearestOfType("Human", self.x, self.y)
+      self.target = GameObject.getNearestOfType("Human", self.x, self.y,
+        function(h) return not h.dying end)
     else
       local t = self.target
-      
-      if self:isNear(t) then
-        -- attack target
-        t:kill()
+      if t.dying then 
         self.target = nil
       else
-        -- move to target
-        local dx, dy = Vector.normalize(t.x - self.x, t.y - self.y)
-        self.dx, self.dy = dx*SPEED, dy*SPEED
+      
+        if self:isNear(t) then
+          -- attack target
+          t:kill()
+          self.target = nil
+        else
+          -- move to target
+          local dx, dy = Vector.normalize(t.x - self.x, t.y - self.y)
+          self.dx, self.dy = dx*SPEED, dy*SPEED
+        end
       end
-
     end
   end
 
