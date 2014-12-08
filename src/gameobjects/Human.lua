@@ -361,7 +361,8 @@ function Human:draw(x, y)
   -- body
   local bh = (0.2 + 0.8*self.bodyHeat)
   love.graphics.setColor(178*bh, 122*bh, 122)
-    local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
+    local w = (5 + breath)*(1 - 0.3*math.abs(self.facex))*(0.6 + 0.4*(1 - math.max(0, self.hunger)))
+    local h = 12 + 12*self:health() - breath 
     love.graphics.rectangle("fill", self.x - w, self.y - h, 2*w, h)
   useful.bindWhite()
   if self.picked then
@@ -428,7 +429,8 @@ end
 
 function Human:drawHighlight()
   local breath = math.sin(4*self.t*math.pi)
-  local w, h = (5 + breath)*(1 - 0.3*math.abs(self.facex)), 24 - breath 
+  local w = (5 + breath)*(1 - 0.3*math.abs(self.facex))*(0.6 + 0.4*(1 - math.max(0, self.hunger)))
+  local h = 12 + 12*self:health() - breath 
   useful.pushCanvas(UI_CANVAS)
     love.graphics.setColor(200, 200, 255)
       love.graphics.setLineWidth(2)
@@ -478,9 +480,8 @@ function Human:eventCollision(other, dt)
   elseif other:isType("Rabbit") then
     if not other.isBurrowed then
       other:kill()
-      if self.hunger >= 0 then
-        self.hunger = math.max(0, self.hunger - 0.5)
-      end
+      GameObject.mapToType("Human", 
+        function(h) h.hunger = h.hunger - 0.5 end)
     end
   end
 end
